@@ -11,7 +11,9 @@ public class LevelController : MonoBehaviour {
 	[Header("Prefabs")]
     public GameObject wall;
 	public GameObject soldier;
-	
+
+	public Vector3 offset { get; protected set; }
+
 	List<GameObject> spawns;
 
 	void Start () {
@@ -25,16 +27,9 @@ public class LevelController : MonoBehaviour {
 
 		//Spawn Objects
 		floor.localScale = new Vector3(width, 1, height);
-		Vector3 offset = new Vector3(-width * 0.5f+0.5f, 0, -height * 0.5f+0.5f);
+		offset = new Vector3(-width * 0.5f+0.5f, 0, -height * 0.5f+0.5f);
         Color32[] pixels = map.GetPixels32();
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-				SpawnObject(pixels[x + y * width], new Vector3(x, 0, y) + offset);
-            }
-        }
-
+		SpawnLevel (pixels, width, height);
 		//Calculate Navigation
 		var bounds = new Bounds(Vector3.zero, new Vector3(width, 1.5f, height));
 		var sources = new List<NavMeshBuildSource>();
@@ -45,24 +40,41 @@ public class LevelController : MonoBehaviour {
 			Debug.LogError("Could not create the Nav Mesh");
 		else
 			NavMesh.AddNavMeshData(data);
+		//Spawn Units
+		SpawnUnits(pixels, width, height);
 	}
 
-	void SpawnObject(Color32 item, Vector3 position)
+	void SpawnLevel(Color32[] map, int width, int height)
 	{
-		if (item.r == item.b && item.r == item.g)
-		{
-			if (item.r == 255)
-				return;
-			else
-			{
-				spawns.Add(ObjectPool.Spawn(wall, position + new Vector3(0, -item.r / 255.0f, 0), Quaternion.identity));
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				var item = map [x + y * width];
+				var position = new Vector3 (x, 0, y) + offset;
+				if (item.r == item.b && item.r == item.g) {
+					if (item.r == 255)
+						continue;
+					else {
+						position.y = -(float)item.r / 255.0f;
+						var go = ObjectPool.Spawn (wall, position, Quaternion.identity);
+						go.isStatic = true;
+						spawns.Add (go);
+					}
+				}
 			}
 		}
-		else if (item.r == 0 && item.g == 0 && item.b != 0)
-		{
-			spawns.Add(ObjectPool.Spawn(soldier, position, Quaternion.identity));
-		}
+	}
 
+	void SpawnUnits(Color32[] map, int width, int height)
+	{
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				var item = map [x + y * width];
+				var position = new Vector3 (x, 0, y) + offset;
+				if (item.r == 0 && item.g == 0 && item.b != 0) {
+					spawns.Add (ObjectPool.Spawn (soldier, position, Quaternion.LookRotation(-position, Vector3.up)));
+				}
+			}
+		}
 	}
 
 	public void Despawn()
