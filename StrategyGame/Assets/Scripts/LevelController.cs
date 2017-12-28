@@ -8,6 +8,7 @@ public class LevelController : MonoBehaviour {
     public Texture2D map;
     public Transform floor;
 	public LayerMask navMeshLayerMask;
+	public Brain brain;
 	[Header("Prefabs")]
     public GameObject wall;
 	public GameObject soldier;
@@ -71,7 +72,9 @@ public class LevelController : MonoBehaviour {
 				var item = map [x + y * width];
 				var position = new Vector3 (x, 0, y) + offset;
 				if (item.r == 0 && item.g == 0 && item.b != 0) {
-					spawns.Add (ObjectPool.Spawn (soldier, position, Quaternion.LookRotation(-position, Vector3.up)));
+					GameObject go = ObjectPool.Spawn(soldier, position, Quaternion.LookRotation(-position, Vector3.up));
+					spawns.Add (go);
+					go.GetComponent<Soldier>().GiveBrain(brain);
 				}
 			}
 		}

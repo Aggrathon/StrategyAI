@@ -360,8 +360,11 @@ public abstract class Academy : MonoBehaviour
         for (var i = 0; i < transform.childCount; i++)
         {
             var child = transform.GetChild(i);
-            var brain = child.GetComponent<Brain>();
 
+			if (!child.gameObject.activeSelf)
+				continue;
+
+            var brain = child.GetComponent<Brain>();
             if (brain != null)
                 brains.Add(brain);
         }

@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TemplateAcademy : Academy {
+public class MLAcademy : Academy {
 
 	public override void AcademyReset()
 	{
-
 
 	}
 

@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 4184738450260334}
   - component: {fileID: 54894187324436794}
   - component: {fileID: 195870320272196030}
-  - component: {fileID: 114803489262737372}
+  - component: {fileID: 114427479848984580}
   m_Layer: 0
   m_Name: Soldier
   m_TagString: Untagged
@@ -202,7 +202,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 84
   m_CollisionDetection: 0
---- !u!114 &114803489262737372
+--- !u!114 &114427479848984580
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -210,9 +210,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 1136974373162410}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5db82e8c5c576514bb0202d158772fee, type: 3}
+  m_Script: {fileID: 11500000, guid: 33bb739f1138d40798114d667776a1d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  brain: {fileID: 0}
+  observations: []
+  maxStep: 0
+  resetOnDone: 0
+  reward: 0
+  done: 0
+  value: 0
+  CumulativeReward: 0
+  stepCounter: 0
+  agentStoredAction: []
+  memory: []
+  id: 0
 --- !u!136 &136635066291302804
 CapsuleCollider:
   m_ObjectHideFlags: 1
