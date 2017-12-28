@@ -6,6 +6,15 @@ using UnityEngine.AI;
 [RequireComponent(typeof(Rigidbody))]
 public class Soldier : Agent {
 
+	[System.Serializable]
+	public struct ReplaceMaterial
+	{
+		public Renderer renderer;
+		public int index;
+	}
+
+	public ReplaceMaterial[] teamColors;
+	
 	NavMeshAgent agent;
 	new Rigidbody rigidbody;
 	List<float> state;
@@ -28,6 +37,32 @@ public class Soldier : Agent {
 		if (agent.isStopped || agent.isPathStale)
 		{
 			//Look for enemy to shoot
+		}
+	}
+
+	public bool SetDestination(Vector3 pos)
+	{
+		if (agent.SetDestination(pos))
+		{
+			agent.isStopped = false;
+			return true;
+		}
+		return false;
+	}
+
+	public void StopMoving()
+	{
+		agent.isStopped = true;
+	}
+
+	public void SetTeam(Brain brain, Material color)
+	{
+		GiveBrain(brain);
+		for (int i = 0; i < teamColors.Length; i++)
+		{
+			var mats = teamColors[i].renderer.materials;
+			mats[teamColors[i].index] = color;
+			teamColors[i].renderer.materials = mats;
 		}
 	}
 

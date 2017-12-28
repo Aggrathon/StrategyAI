@@ -113,30 +113,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!114 &188821888
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35813a1be64e144f887d7d5f15b963fa, type: 3}
-  m_Name: (Clone)(Clone)(Clone)
-  m_EditorClassIdentifier: 
-  brain: {fileID: 1896059211}
---- !u!114 &466358911
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35813a1be64e144f887d7d5f15b963fa, type: 3}
-  m_Name: (Clone)
-  m_EditorClassIdentifier: 
-  brain: {fileID: 954343719}
 --- !u!1 &488000728
 GameObject:
   m_ObjectHideFlags: 0
@@ -164,12 +140,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92331c4bf06145d4ca00e7cdd5f1ba2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  map: {fileID: 2800000, guid: 69a9e02633d13e349ad0ab3290de5c22, type: 3}
   floor: {fileID: 1583039331}
   navMeshLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  brain: {fileID: 1896059211}
+  playerOneColor: {fileID: 2100000, guid: 1eef1c9afbee5634bb5879121d035089, type: 2}
+  playerTwoColor: {fileID: 2100000, guid: 1ed2fa2fb51d17745866167b99ab4fe8, type: 2}
   wall: {fileID: 1602892556581532, guid: 61c21d0b0a9cf674f940e973334ff14a, type: 2}
   soldier: {fileID: 1136974373162410, guid: 9f7b7769e95e4974c826ded0241a03be, type: 2}
 --- !u!4 &488000730
@@ -188,7 +164,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &493927008
+--- !u!114 &888509251
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
@@ -197,42 +173,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 41e9bda8f3cf1492fa74926a530f6f70, type: 3}
-  m_Name: (Clone)
+  m_Name: (Clone)(Clone)(Clone)(Clone)
   m_EditorClassIdentifier: 
-  broadcast: 1
+  broadcast: 0
   continuousPlayerActions: []
-  discretePlayerActions:
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
+  discretePlayerActions: []
   defaultAction: 8
-  brain: {fileID: 954343719}
---- !u!114 &875710161
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 943466ab374444748a364f9d6c3e2fe2, type: 3}
-  m_Name: (Clone)
-  m_EditorClassIdentifier: 
-  broadcast: 1
-  brain: {fileID: 0}
+  brain: {fileID: 1896059211}
 --- !u!1 &899990210
 GameObject:
   m_ObjectHideFlags: 0
@@ -314,6 +261,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 70, y: 0, z: 0}
+--- !u!114 &929682365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 943466ab374444748a364f9d6c3e2fe2, type: 3}
+  m_Name: (Clone)(Clone)(Clone)(Clone)
+  m_EditorClassIdentifier: 
+  broadcast: 1
+  brain: {fileID: 0}
 --- !u!1 &954343718
 GameObject:
   m_ObjectHideFlags: 0
@@ -360,10 +320,10 @@ MonoBehaviour:
     stateSpaceType: 1
   brainType: 2
   CoreBrains:
-  - {fileID: 493927008}
-  - {fileID: 875710161}
-  - {fileID: 466358911}
-  instanceID: -178298
+  - {fileID: 1837106213}
+  - {fileID: 1057271462}
+  - {fileID: 2136040551}
+  instanceID: 10768
 --- !u!4 &954343720
 Transform:
   m_ObjectHideFlags: 0
@@ -406,7 +366,7 @@ Transform:
   m_Father: {fileID: 488000730}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1037164583
+--- !u!114 &1057271462
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
@@ -415,7 +375,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 943466ab374444748a364f9d6c3e2fe2, type: 3}
-  m_Name: (Clone)(Clone)(Clone)
+  m_Name: (Clone)(Clone)
   m_EditorClassIdentifier: 
   broadcast: 1
   brain: {fileID: 0}
@@ -484,38 +444,6 @@ Transform:
   m_Father: {fileID: 488000730}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 30, y: -40, z: 0}
---- !u!114 &1090125228
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41e9bda8f3cf1492fa74926a530f6f70, type: 3}
-  m_Name: (Clone)(Clone)(Clone)
-  m_EditorClassIdentifier: 
-  broadcast: 0
-  continuousPlayerActions: []
-  discretePlayerActions:
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  - key: 0
-    value: 0
-  defaultAction: 8
-  brain: {fileID: 1896059211}
 --- !u!1 &1317453756
 GameObject:
   m_ObjectHideFlags: 0
@@ -4023,6 +3951,15 @@ MonoBehaviour:
   done: 0
   episodeCount: 0
   currentStep: 0
+  playerOne: {fileID: 1896059211}
+  playerTwo: {fileID: 954343719}
+  humanBrains:
+  - {fileID: 1896059211}
+  externalBrains:
+  - {fileID: 954343719}
+  internalBrains: []
+  map: {fileID: 2800000, guid: 69a9e02633d13e349ad0ab3290de5c22, type: 3}
+  generator: {fileID: 488000729}
 --- !u!1 &1583039327
 GameObject:
   m_ObjectHideFlags: 0
@@ -4052,6 +3989,38 @@ Transform:
   m_Father: {fileID: 488000730}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1837106213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41e9bda8f3cf1492fa74926a530f6f70, type: 3}
+  m_Name: (Clone)(Clone)
+  m_EditorClassIdentifier: 
+  broadcast: 1
+  continuousPlayerActions: []
+  discretePlayerActions:
+  - key: 0
+    value: 0
+  - key: 0
+    value: 0
+  - key: 0
+    value: 0
+  - key: 0
+    value: 0
+  - key: 0
+    value: 0
+  - key: 0
+    value: 0
+  - key: 0
+    value: 0
+  - key: 0
+    value: 0
+  defaultAction: 8
+  brain: {fileID: 954343719}
 --- !u!1 &1896059208
 GameObject:
   m_ObjectHideFlags: 0
@@ -4125,10 +4094,22 @@ MonoBehaviour:
     stateSpaceType: 1
   brainType: 0
   CoreBrains:
-  - {fileID: 1090125228}
-  - {fileID: 1037164583}
-  - {fileID: 188821888}
-  instanceID: 10802
+  - {fileID: 888509251}
+  - {fileID: 929682365}
+  - {fileID: 2017563257}
+  instanceID: 10806
+--- !u!114 &2017563257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35813a1be64e144f887d7d5f15b963fa, type: 3}
+  m_Name: (Clone)(Clone)(Clone)(Clone)
+  m_EditorClassIdentifier: 
+  brain: {fileID: 1896059211}
 --- !u!1 &2056391362
 GameObject:
   m_ObjectHideFlags: 0
@@ -4288,3 +4269,15 @@ MeshFilter:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 2117120144}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2136040551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35813a1be64e144f887d7d5f15b963fa, type: 3}
+  m_Name: (Clone)(Clone)
+  m_EditorClassIdentifier: 
+  brain: {fileID: 954343719}

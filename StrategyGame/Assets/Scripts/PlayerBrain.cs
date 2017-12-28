@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
+[RequireComponent(typeof(Brain))]
 public class PlayerBrain : MonoBehaviour {
 
 	public GameObject marker;
 
-	NavMeshAgent selected = null;
+	Soldier selected = null;
+	Brain brain;
 
 	private void Start()
 	{
+		brain = GetComponent<Brain>();
 		marker.SetActive(false);
 	}
 
@@ -21,29 +24,38 @@ public class PlayerBrain : MonoBehaviour {
 			RaycastHit hit;
 			if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100f))
 			{
+				Soldier sel = null;
 				if (hit.rigidbody != null)
 				{
-					selected = hit.rigidbody.GetComponent<NavMeshAgent>();
-					marker.SetActive(true);
+					sel = hit.rigidbody.GetComponent<Soldier>();
+					if (sel.brain != brain)
+						sel = null;
 				}
-				else if (selected != null)
-				{
-					if (selected.SetDestination(hit.point))
+				if (sel != null) {
+					marker.SetActive(true);
+					if (selected == sel)
 					{
-						Debug.Log("Path set");
-						selected = null;
-						marker.SetActive(false);
+						sel.StopMoving();
 					}
 					else
 					{
-						Debug.Log("Path not found");
+						selected = sel;
 					}
+				}
+				else if (selected != null)
+				{
+					selected.SetDestination(hit.point);
 				}
 			}
 		}
 		if (selected)
 		{
 			marker.transform.position = new Vector3(selected.transform.position.x, marker.transform.position.y, selected.transform.position.z);
+			if (!selected.gameObject.activeSelf)
+			{
+				marker.SetActive(false);
+				selected = null;
+			}
 		}
 	}
 }

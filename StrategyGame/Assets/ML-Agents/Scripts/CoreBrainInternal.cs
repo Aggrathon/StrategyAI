@@ -17,7 +17,8 @@ public class CoreBrainInternal : ScriptableObject, CoreBrain
 {
 
     [SerializeField]
-    private bool broadcast = true;
+#pragma warning disable 0414
+	private bool broadcast = true;
 
     [System.Serializable]
     private struct TensorFlowAgentPlaceholder

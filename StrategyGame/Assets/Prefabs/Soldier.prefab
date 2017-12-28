@@ -225,6 +225,9 @@ MonoBehaviour:
   agentStoredAction: []
   memory: []
   id: 0
+  teamColors:
+  - renderer: {fileID: 23114046917235026}
+    index: 0
 --- !u!136 &136635066291302804
 CapsuleCollider:
   m_ObjectHideFlags: 1

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class LevelController : MonoBehaviour {
-
-    public Texture2D map;
+public class LevelGenerator : MonoBehaviour {
+	
     public Transform floor;
 	public LayerMask navMeshLayerMask;
-	public Brain brain;
+	public Material playerOneColor;
+	public Material playerTwoColor;
 	[Header("Prefabs")]
     public GameObject wall;
 	public GameObject soldier;
@@ -17,12 +17,11 @@ public class LevelController : MonoBehaviour {
 
 	List<GameObject> spawns;
 
-	void Start () {
+	void Awake () {
 		spawns = new List<GameObject>();
-        Generate();
 	}
 
-    public void Generate() {
+    public void Generate(Texture2D map, Brain playerOne, Brain playerTwo) {
         int width = map.width;
         int height = map.height;
 
@@ -42,7 +41,7 @@ public class LevelController : MonoBehaviour {
 		else
 			NavMesh.AddNavMeshData(data);
 		//Spawn Units
-		SpawnUnits(pixels, width, height);
+		SpawnUnits(pixels, width, height, playerOne, playerTwo);
 	}
 
 	void SpawnLevel(Color32[] map, int width, int height)
@@ -65,16 +64,23 @@ public class LevelController : MonoBehaviour {
 		}
 	}
 
-	void SpawnUnits(Color32[] map, int width, int height)
+	void SpawnUnits(Color32[] map, int width, int height, Brain playerOne, Brain playerTwo)
 	{
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
 				var item = map [x + y * width];
 				var position = new Vector3 (x, 0, y) + offset;
-				if (item.r == 0 && item.g == 0 && item.b != 0) {
+				if (item.r == 0 && item.g == 0 && item.b != 0)
+				{
 					GameObject go = ObjectPool.Spawn(soldier, position, Quaternion.LookRotation(-position, Vector3.up));
-					spawns.Add (go);
-					go.GetComponent<Soldier>().GiveBrain(brain);
+					spawns.Add(go);
+					go.GetComponent<Soldier>().SetTeam(playerOne, playerOneColor);
+				}
+				else if (item.r != 0 && item.g == 0 && item.b == 0)
+				{
+					GameObject go = ObjectPool.Spawn(soldier, position, Quaternion.LookRotation(-position, Vector3.up));
+					spawns.Add(go);
+					go.GetComponent<Soldier>().SetTeam(playerTwo, playerTwoColor);
 				}
 			}
 		}
