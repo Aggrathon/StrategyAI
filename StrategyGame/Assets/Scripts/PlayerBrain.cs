@@ -6,6 +6,14 @@ using UnityEngine.AI;
 [RequireComponent(typeof(Brain))]
 public class PlayerBrain : MonoBehaviour {
 
+	public enum InputType
+	{
+		mouse,
+		numpad,
+		controller
+	}
+
+	public InputType inputMethod = InputType.mouse;
 	public GameObject marker;
 
 	Soldier selected = null;
@@ -19,6 +27,43 @@ public class PlayerBrain : MonoBehaviour {
 
 	private void Update()
 	{
+		switch (inputMethod)
+		{
+			case InputType.mouse:
+				HandleMouseInput();
+				break;
+			case InputType.numpad:
+				HandleNumpadInput();
+				break;
+			case InputType.controller:
+				HandleControllerInput();
+				break;
+		}
+		if (selected)
+		{
+			marker.transform.position = new Vector3(selected.transform.position.x, marker.transform.position.y, selected.transform.position.z);
+			if (!selected.gameObject.activeSelf)
+			{
+				marker.SetActive(false);
+				selected = null;
+			}
+		}
+	}
+
+	void HandleNumpadInput()
+	{
+		enabled = false;
+		Debug.LogWarning("Numpad input is not implemented");
+	}
+
+	void HandleControllerInput()
+	{
+		enabled = false;
+		Debug.LogWarning("Controller input is not implemented");
+	}
+
+	void HandleMouseInput()
+	{
 		if (Input.GetMouseButtonUp(0))
 		{
 			RaycastHit hit;
@@ -31,7 +76,8 @@ public class PlayerBrain : MonoBehaviour {
 					if (sel.brain != brain)
 						sel = null;
 				}
-				if (sel != null) {
+				if (sel != null)
+				{
 					marker.SetActive(true);
 					if (selected == sel)
 					{
@@ -46,15 +92,6 @@ public class PlayerBrain : MonoBehaviour {
 				{
 					selected.SetDestination(hit.point);
 				}
-			}
-		}
-		if (selected)
-		{
-			marker.transform.position = new Vector3(selected.transform.position.x, marker.transform.position.y, selected.transform.position.z);
-			if (!selected.gameObject.activeSelf)
-			{
-				marker.SetActive(false);
-				selected = null;
 			}
 		}
 	}

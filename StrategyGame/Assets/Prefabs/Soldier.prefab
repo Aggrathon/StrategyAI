@@ -40,7 +40,7 @@ GameObject:
   - component: {fileID: 33238881646194192}
   - component: {fileID: 23263415993176144}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Mask
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -58,7 +58,7 @@ GameObject:
   - component: {fileID: 136635066291302804}
   - component: {fileID: 23114046917235026}
   m_Layer: 0
-  m_Name: Capsule
+  m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -228,6 +228,12 @@ MonoBehaviour:
   teamColors:
   - renderer: {fileID: 23114046917235026}
     index: 0
+  bullet: {fileID: 1340253382977012, guid: 852ea49737124284a94508ef9f1d288c, type: 2}
+  shootingPoint: {fileID: 4657902544590868}
+  shootingInterval: 0.5
+  shootingAngle: 10
+  shootingRandomness: 0.06
+  maxHealth: 100
 --- !u!136 &136635066291302804
 CapsuleCollider:
   m_ObjectHideFlags: 1

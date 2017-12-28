@@ -27,6 +27,21 @@ public class ObjectPool : MonoBehaviour {
 			GameObject go = new GameObject("ObjectPool");
 			instance = go.AddComponent<ObjectPool>();
 		}
+		else
+		{
+			Queue<PoolObject> queue;
+			if (instance.pool.TryGetValue(obj, out queue))
+			{
+				if (queue.Count > 0)
+				{
+					GameObject go = queue.Dequeue().gameObject;
+					go.transform.position = position;
+					go.transform.rotation = rotation;
+					go.SetActive(true);
+					return go;
+				}
+			}
+		}
 		GameObject go2 = Instantiate(obj, position, rotation, instance.transform);
 		go2.AddComponent<PoolObject>().prefab = obj;
 		return go2;
