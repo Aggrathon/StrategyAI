@@ -20,25 +20,20 @@ public class Soldier : Agent {
 	public float shootingInterval = 0.5f;
 	public float shootingAngle = 10f;
 	public float shootingRandomness = 0.05f;
-	[SerializeField] float maxHealth = 100f;
+	public float maxHealth = 100f;
 
 	
 	NavMeshAgent agent;
 	new Rigidbody rigidbody;
-	List<float> state;
 	[System.NonSerialized] public float health;
 	float shootTime;
+	GameState state;
 
 	public override void InitializeAgent()
 	{
 		agent = GetComponent<NavMeshAgent>();
 		rigidbody = GetComponent<Rigidbody>();
 		agent.updatePosition = false;
-		state = new List<float>(12);
-		for (int i = 0; i < 12; i++)
-		{
-			state.Add(0);
-		}
 		health = maxHealth;
 		shootTime = Time.time;
 	}
@@ -81,7 +76,7 @@ public class Soldier : Agent {
 		}
 	}
 
-	public void SetTeam(Brain brain, Material color)
+	public void SetTeam(Brain brain, Material color, GameState state)
 	{
 		GiveBrain(brain);
 		for (int i = 0; i < teamColors.Length; i++)
@@ -90,27 +85,38 @@ public class Soldier : Agent {
 			mats[teamColors[i].index] = color;
 			teamColors[i].renderer.materials = mats;
 		}
+		this.state = state;
 	}
 
 
 	public override List<float> CollectState()
 	{
-		return state;
+		state.Select(this);
+		return new List<float>(state.map);
 	}
 
 	public override void AgentStep(float[] act)
 	{
-
+		int action = Mathf.RoundToInt(act[0]);
+		reward -= 0.02f;
 	}
 
 	public override void AgentReset()
 	{
 		health = maxHealth;
 		shootTime = Time.time;
+		reward = 0;
 	}
 
 	public override void AgentOnDone()
 	{
+		reward -= 1;
+	}
 
+	float VectorToAngle(Vector3 vec)
+	{
+		float angle = Vector3.SignedAngle(Vector3.forward, vec, Vector3.up);
+		if (angle < 0) angle += 180;
+		return angle;
 	}
 }

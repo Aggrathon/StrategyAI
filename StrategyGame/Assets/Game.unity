@@ -4171,7 +4171,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxSteps: 0
-  frameToSkip: 10
+  frameToSkip: 25
   waitTime: 0
   isInference: 0
   trainingConfiguration:
@@ -4201,6 +4201,8 @@ MonoBehaviour:
   internalBrains: []
   map: {fileID: 2800000, guid: 69a9e02633d13e349ad0ab3290de5c22, type: 3}
   generator: {fileID: 488000729}
+  width: 60
+  height: 30
 --- !u!114 &1547170516
 MonoBehaviour:
   m_ObjectHideFlags: 0
