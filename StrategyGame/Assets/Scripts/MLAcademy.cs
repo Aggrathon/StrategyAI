@@ -18,17 +18,17 @@ public class MLAcademy : Academy {
 	public int width = 60;
 	public int height = 30;
 
-	GameState state;
+	[System.NonSerialized] public List<Soldier> units;
 
 	public override void InitializeAcademy()
 	{
-
+		units = new List<Soldier>();
 	}
 
 	public override void AcademyReset()
 	{
 		generator.Despawn();
-		//Select: resetParameters["Difficulty"]
+		//TODO resetParameters["Difficulty"]
 		float players = 2f;
 		if(!resetParameters.TryGetValue("Players", out players))
 		{
@@ -49,14 +49,27 @@ public class MLAcademy : Academy {
 				playerTwo = humanBrains[1];
 				break;
 		}
-		state = generator.Generate(map, playerOne, playerTwo, width, height);
-		playerOne.brainParameters.stateSize = state.map.Capacity;
-		playerTwo.brainParameters.stateSize = state.map.Capacity;
+		units.Clear();
+		generator.Generate(map, width, height, this);
+	}
+
+	public void RegisterUnit(Soldier unit)
+	{
+		units.Add(unit);
+	}
+
+	public void UnregisterUnit(Soldier unit)
+	{
+		units.Remove(unit);
+	}
+
+	public void Select(Soldier s)
+	{
+		//Todo Show current selection for AI camera
 	}
 
 	public override void AcademyStep()
 	{
-		state.UpdatePositions();
 	}
 
 }

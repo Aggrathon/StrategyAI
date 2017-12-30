@@ -74,18 +74,21 @@ public class PlayerBrain : MonoBehaviour {
 				{
 					sel = hit.rigidbody.GetComponent<Soldier>();
 					if (sel.brain != brain)
-						sel = null;
-				}
-				if (sel != null)
-				{
-					marker.SetActive(true);
-					if (selected == sel)
 					{
-						sel.StopMoving();
+						if (selected != null)
+							selected.SetTarget(sel);
 					}
 					else
 					{
-						selected = sel;
+						marker.SetActive(true);
+						if (selected == sel)
+						{
+							sel.StopMoving();
+						}
+						else
+						{
+							selected = sel;
+						}
 					}
 				}
 				else if (selected != null)

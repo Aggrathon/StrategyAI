@@ -194,7 +194,7 @@ TrailRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Time: 0.3
+  m_Time: 0.15
   m_Parameters:
     serializedVersion: 2
     widthMultiplier: 0.3
@@ -264,8 +264,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 10
-  damage: 25.2
-  safePeriod: 0.2
+  damage: 17
+  safePeriod: 0.05
   liveTime: 7
 --- !u!135 &135357541723339006
 SphereCollider:

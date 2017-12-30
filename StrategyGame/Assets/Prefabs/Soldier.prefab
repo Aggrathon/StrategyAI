@@ -230,9 +230,9 @@ MonoBehaviour:
     index: 0
   bullet: {fileID: 1340253382977012, guid: 852ea49737124284a94508ef9f1d288c, type: 2}
   shootingPoint: {fileID: 4657902544590868}
-  shootingInterval: 0.5
+  shootingInterval: 0.3
   shootingAngle: 10
-  shootingRandomness: 0.03
+  shootingRandomness: 2.5
   maxHealth: 100
   shootingDistance: 25
 --- !u!136 &136635066291302804
