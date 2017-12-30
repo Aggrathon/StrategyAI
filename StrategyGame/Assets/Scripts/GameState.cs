@@ -10,7 +10,7 @@ public class GameState
 		public int position;
 		public int player;
 
-		public void UpdatePosition(int newPos) { position = newPos; }
+		public UnitPosition UpdatePosition(int newPos) { this.position = newPos; return this; }
 	}
 
 	public int width;
@@ -86,7 +86,7 @@ public class GameState
 			int index = CalculatePosition(units[i].unit.transform.position) + 2 + units[i].player;
 			map[units[i].position] = 0;
 			map[index] = 0.5f + units[i].unit.health / units[i].unit.maxHealth * 0.5f;
-			units[i].UpdatePosition(index);
+			units[i] = units[i].UpdatePosition(index);
 		}
 	}
 
@@ -100,6 +100,8 @@ public class GameState
 
 	int CalculatePosition(int x, int y)
 	{
-		return x * width * 5 + y * 5;
+		x = Mathf.Clamp(x, 0, width);
+		y = Mathf.Clamp(y, 0, height);
+		return y * width * 5 + x * 5;
 	}
 }

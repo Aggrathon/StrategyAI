@@ -29,7 +29,12 @@ public class MLAcademy : Academy {
 	{
 		generator.Despawn();
 		//Select: resetParameters["Difficulty"]
-		switch(Mathf.RoundToInt(resetParameters["Players"]))
+		float players = 2f;
+		if(!resetParameters.TryGetValue("Players", out players))
+		{
+			players = 2f;
+		}
+		switch(Mathf.RoundToInt(players))
 		{
 			case 0:
 				playerOne = externalBrains[0];
