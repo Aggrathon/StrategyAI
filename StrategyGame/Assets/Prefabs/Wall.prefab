@@ -137,5 +137,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderer: {fileID: 23780835903913778}
-  highColor: {r: 0.0627451, g: 0.0627451, b: 0.0627451, a: 1}
+  highColor: {r: 0.03137255, g: 0.03137255, b: 0.03137255, a: 1}
   lowColor: {r: 0.566, g: 0.566, b: 0.566, a: 1}

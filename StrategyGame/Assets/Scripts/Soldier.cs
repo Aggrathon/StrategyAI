@@ -21,7 +21,7 @@ public class Soldier : Agent {
 	public float shootingAngle = 10f;
 	public float shootingRandomness = 0.05f;
 	public float maxHealth = 100f;
-	public float shootingDistance = 30f;
+	public float shootingRange = 25f;
 
 	
 	NavMeshAgent agent;
@@ -31,6 +31,7 @@ public class Soldier : Agent {
 	MLAcademy academy;
 	Soldier target;
 	List<float> state;
+	bool moving = true;
 
 	public override void InitializeAgent()
 	{
@@ -44,20 +45,20 @@ public class Soldier : Agent {
 
 	private void FixedUpdate()
 	{
-		if (agent.isStopped || agent.isPathStale || !agent.hasPath || agent.velocity.sqrMagnitude < 0.01f)
+		if (agent.isStopped || agent.isPathStale || !agent.hasPath)
 		{
 			if (target != null)
-				Shoot();
-			else
 			{
-				target = FindClosestEnemy();
-				if (target != null)
+				if (target.done || Vector3.Distance(transform.position, target.transform.position) > shootingRange)
+					target = null;
+				else
 					Shoot();
-				target = null;
 			}
+			moving = false;
 		}
 		else
 		{
+			moving = true;
 			rigidbody.MovePosition(rigidbody.position + agent.velocity * Time.fixedDeltaTime);
 		}
 	}
@@ -72,6 +73,28 @@ public class Soldier : Agent {
 		return false;
 	}
 
+	public void SetTargetDirection(float angle)
+	{
+		float closest = 2;
+		foreach (var unit in academy.units)
+		{
+			if(unit.brain != brain)
+			{
+				Vector3 dir = unit.transform.position - transform.position;
+				float dist = dir.magnitude / shootingRange;
+				if (dist < 1 && dist < closest)
+				{
+					float da = Mathf.Max(Mathf.DeltaAngle(angle, VectorToAngle(dir))-20, 0)/60;
+					if (da < 1 && da+dist < closest)
+					{
+						closest = da + dist;
+						target = unit;
+					}
+				}
+			}
+		}
+	}
+
 	public void StopMoving()
 	{
 		agent.isStopped = true;
@@ -79,13 +102,18 @@ public class Soldier : Agent {
 
 	public void SetTarget(Soldier target)
 	{
+		Vector3 dir = target.transform.position - transform.position;
+		float len = dir.magnitude;
+		if(len > shootingRange)
+		{
+			SetDestination(target.transform.position - dir.normalized * (shootingRange - 5));
+		}
 		this.target = target;
 	}
 
-	Soldier FindClosestEnemy()
+	void FindClosestEnemy()
 	{
-		float dist = shootingDistance;
-		Soldier target = null;
+		float dist = shootingRange;
 		for (int i = 1; i < academy.units.Count; i++)
 		{
 			var unit = academy.units[i];
@@ -99,7 +127,6 @@ public class Soldier : Agent {
 				}
 			}
 		}
-		return target;
 	}
 
 	void Shoot()
@@ -132,6 +159,7 @@ public class Soldier : Agent {
 		this.academy = academy;
 		observations = new List<Camera>(new Camera[] { camera });
 		academy.RegisterUnit(this);
+		agent.isStopped = true;
 	}
 
 
@@ -147,11 +175,22 @@ public class Soldier : Agent {
 	public override void AgentStep(float[] act)
 	{
 		int action = Mathf.RoundToInt(act[0]);
-		if (action > 7)
-			StopMoving();
+		if (action < 1)
+		{
+			if (!moving && target == null)
+				FindClosestEnemy();
+		}
+		else if (action > 7)
+		{
+			if (!moving)
+			{
+				float angle = (action - 8) * 360 / 8;
+				SetTargetDirection(angle);
+			}
+		}
 		else if (action > 0)
 		{
-			SetDestination(transform.position + Quaternion.Euler(0, action * 360 / 8, 0) * Vector3.forward*0.5f);
+			SetDestination(transform.position + Quaternion.Euler(0, action * 360 / 8, 0) * Vector3.forward*0.2f);
 		}
 		//reward -= 0.01f;
 	}
@@ -162,6 +201,10 @@ public class Soldier : Agent {
 		shootTime = Time.time;
 		reward = 0;
 		target = null;
+		agent.Warp(transform.position);
+		agent.isStopped = true;
+		agent.ResetPath();
+		moving = false;
 	}
 
 	public override void AgentOnDone()
@@ -174,7 +217,6 @@ public class Soldier : Agent {
 	float VectorToAngle(Vector3 vec)
 	{
 		float angle = Vector3.SignedAngle(Vector3.forward, vec, Vector3.up);
-		if (angle < 0) angle += 360;
 		return angle;
 	}
 }
