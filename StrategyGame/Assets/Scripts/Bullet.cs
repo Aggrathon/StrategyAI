@@ -11,10 +11,11 @@ public class Bullet : MonoBehaviour
 
 	public float speed = 10f;
 	public float damage = 25.2f;
-	public float safePeriod = 0.2f;
+	//public float safePeriod = 0.2f;
 	public float liveTime = 5f;
 
 	float time;
+	[System.NonSerialized] public Soldier shooter;
 
 	private void Awake()
 	{
@@ -37,17 +38,22 @@ public class Bullet : MonoBehaviour
 
 	private void OnTriggerEnter(Collider other)
 	{
-		if (time + safePeriod < Time.time)
+		//if (time + safePeriod < Time.time)
+		//{
+		if (other.attachedRigidbody != null)
 		{
-			if (other.attachedRigidbody != null)
+			var s = other.attachedRigidbody.GetComponent<Soldier>();
+			if (s != null)
 			{
-				var s = other.attachedRigidbody.GetComponent<Soldier>();
-				if (s != null)
-				{
-					s.health -= damage;
-				}
+				if (s == shooter)
+					return;
+				else if (s.brain == shooter.brain)
+					shooter.reward -= s.DoDamage(damage);
+				else
+					shooter.reward += s.DoDamage(damage);
 			}
-			gameObject.SetActive(false);
 		}
+		gameObject.SetActive(false);
+		//}
 	}
 }

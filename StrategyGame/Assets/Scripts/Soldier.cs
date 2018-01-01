@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody))]
@@ -20,18 +21,21 @@ public class Soldier : Agent {
 	public float shootingInterval = 0.5f;
 	public float shootingAngle = 10f;
 	public float shootingRandomness = 0.05f;
-	public float maxHealth = 100f;
 	public float shootingRange = 25f;
+	public Image healthBar;
+	public Gradient healthColor;
+	public float maxHealth = 100f;
 
-	
+
 	NavMeshAgent agent;
 	new Rigidbody rigidbody;
-	[System.NonSerialized] public float health;
+	float health;
 	float shootTime;
 	MLAcademy academy;
 	Soldier target;
 	List<float> state;
-	bool moving = true;
+	bool moving = false;
+	[System.NonSerialized] public int goals;
 
 	public override void InitializeAgent()
 	{
@@ -142,9 +146,26 @@ public class Soldier : Agent {
 				(Random.value-0.5f) * shootingRandomness, 
 				(Random.value-0.5f) * shootingRandomness * 3, 
 				(Random.value-0.5f) * shootingRandomness);
-			ObjectPool.Spawn(bullet, shootingPoint.position, rotateTarget * rnd);
+			ObjectPool.Spawn(bullet, shootingPoint.position, rotateTarget * rnd).GetComponent<Bullet>().shooter = this;
 			shootTime = Time.time;
 		}
+	}
+
+
+	public float DoDamage(float value)
+	{
+		health -= value;
+		if (health < 0)
+		{
+			done = true;
+			reward -= MLAcademy.REWARD_DIE;
+			return MLAcademy.REWARD_KILL;
+		}
+		healthBar.fillAmount = health / maxHealth;
+		healthBar.color = healthColor.Evaluate(1-health / maxHealth);
+		float rw = health / maxHealth * MLAcademy.REWARD_HIT;
+		reward -= rw;
+		return rw;
 	}
 
 	public void SetTeam(Brain brain, Material color, MLAcademy academy, Camera camera)
@@ -192,12 +213,12 @@ public class Soldier : Agent {
 		{
 			SetDestination(transform.position + Quaternion.Euler(0, action * 360 / 8, 0) * Vector3.forward*0.2f);
 		}
-		//reward -= 0.01f;
 	}
 
 	public override void AgentReset()
 	{
 		health = maxHealth;
+		DoDamage(0);
 		shootTime = Time.time;
 		reward = 0;
 		target = null;
@@ -205,11 +226,11 @@ public class Soldier : Agent {
 		agent.isStopped = true;
 		agent.ResetPath();
 		moving = false;
+		goals = 0;
 	}
 
 	public override void AgentOnDone()
 	{
-		reward -= 1;
 		academy.UnregisterUnit(this);
 		gameObject.SetActive(false);
 	}

@@ -14,6 +14,7 @@ public class LevelGenerator : MonoBehaviour {
 	[Header("Prefabs")]
     public GameObject wall;
 	public GameObject soldier;
+	public GameObject goal;
 
 	List<GameObject> spawns;
 
@@ -68,6 +69,11 @@ public class LevelGenerator : MonoBehaviour {
 						continue;
 					}
 				}
+				else if (item.r == 0 && item.b == 0)
+				{
+					var go = ObjectPool.Spawn(goal, position, Quaternion.identity);
+					spawns.Add(go);
+				}
 			}
 		}
 	}
@@ -80,7 +86,7 @@ public class LevelGenerator : MonoBehaviour {
 				if (item.r == 0 && item.g == 0 && item.b != 0)
 				{
 					var position = new Vector3(x + offsetX, 0, y + offsetY);
-					GameObject go = ObjectPool.Spawn(soldier, position, Quaternion.LookRotation(-position, Vector3.up));
+					GameObject go = ObjectPool.Spawn(soldier, position, Quaternion.LookRotation(floor.position-position, Vector3.up));
 					spawns.Add(go);
 					Soldier s = go.GetComponent<Soldier>();
 					s.SetTeam(academy.playerOne, playerOneColor, academy, aiCamera);
@@ -88,7 +94,7 @@ public class LevelGenerator : MonoBehaviour {
 				else if (item.r != 0 && item.g == 0 && item.b == 0)
 				{
 					var position = new Vector3(x + offsetX, 0, y + offsetY);
-					GameObject go = ObjectPool.Spawn(soldier, position, Quaternion.LookRotation(-position, Vector3.up));
+					GameObject go = ObjectPool.Spawn(soldier, position, Quaternion.LookRotation(floor.position-position, Vector3.up));
 					spawns.Add(go);
 					Soldier s = go.GetComponent<Soldier>();
 					s.SetTeam(academy.playerTwo, playerTwoColor, academy, aiCamera);
