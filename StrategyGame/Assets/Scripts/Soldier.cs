@@ -80,19 +80,21 @@ public class Soldier : Agent {
 	public void SetTargetDirection(float angle)
 	{
 		float closest = 2;
-		foreach (var unit in academy.units)
+		foreach (var team in academy.teams)
 		{
-			if(unit.brain != brain)
-			{
-				Vector3 dir = unit.transform.position - transform.position;
-				float dist = dir.magnitude / shootingRange;
-				if (dist < 1 && dist < closest)
+			if (team.brain != brain) {
+				foreach (var unit in team.units)
 				{
-					float da = Mathf.Max(Mathf.DeltaAngle(angle, VectorToAngle(dir))-20, 0)/60;
-					if (da < 1 && da+dist < closest)
+					Vector3 dir = unit.transform.position - transform.position;
+					float dist = dir.magnitude / shootingRange;
+					if (dist < 1 && dist < closest)
 					{
-						closest = da + dist;
-						target = unit;
+						float da = Mathf.Max(Mathf.DeltaAngle(angle, VectorToAngle(dir)) - 20, 0) / 60;
+						if (da < 1 && da + dist < closest)
+						{
+							closest = da + dist;
+							target = unit;
+						}
 					}
 				}
 			}
@@ -118,16 +120,18 @@ public class Soldier : Agent {
 	void FindClosestEnemy()
 	{
 		float dist = shootingRange;
-		for (int i = 1; i < academy.units.Count; i++)
+		foreach (var team in academy.teams)
 		{
-			var unit = academy.units[i];
-			if (unit.brain != brain)
+			if (team.brain != brain)
 			{
-				float d = Vector3.Distance(transform.position, unit.transform.position);
-				if (d < dist)
+				foreach (var unit in team.units)
 				{
-					target = unit;
-					dist = d;
+					float d = Vector3.Distance(transform.position, unit.transform.position);
+					if (d < dist)
+					{
+						target = unit;
+						dist = d;
+					}
 				}
 			}
 		}

@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 4857732510304624}
   - component: {fileID: 65604354325884402}
   - component: {fileID: 114423077396927894}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Goal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -38,7 +38,7 @@ GameObject:
   - component: {fileID: 4024885334920650}
   - component: {fileID: 33538898510522664}
   - component: {fileID: 23355539034057738}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Quad
   m_TagString: Untagged
   m_Icon: {fileID: 0}

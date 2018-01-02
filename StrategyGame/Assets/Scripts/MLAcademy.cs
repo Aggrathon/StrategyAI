@@ -10,9 +10,28 @@ public class MLAcademy : Academy {
 	public const float REWARD_KILL = 0.2f;
 	public const float REWARD_GOAL = 0.005f;
 
+	public class Team
+	{
+		public List<Soldier> units;
+		public float score;
+		public Brain brain;
+		public Team(Brain b)
+		{
+			score = 0;
+			brain = b;
+			units = new List<Soldier>();
+		}
+	}
+
+	public enum Competitiors
+	{
+		AIvsAI = 0,
+		HumanvsAI = 1,
+		HumanvsHuman = 2
+	}
+
 	[Header("Brains")]
-	public Brain playerOne;
-	public Brain playerTwo;
+	public Competitiors defaultCompetitors = Competitiors.HumanvsHuman;
 	public Brain[] humanBrains;
 	public Brain[] externalBrains;
 	public Brain[] internalBrains;
@@ -23,87 +42,74 @@ public class MLAcademy : Academy {
 	public int width = 60;
 	public int height = 30;
 	public Transform aiMarker;
+	public float goalTime = 15f;
 
-	[System.NonSerialized] public List<Soldier> units;
-
-	float playerOneScore;
-	float playerTwoScore;
+	public List<Team> teams;
 
 	public override void InitializeAcademy()
 	{
-		units = new List<Soldier>();
+		teams = new List<Team>();
 	}
 
 	public override void AcademyReset()
 	{
 		generator.Despawn();
 		//TODO resetParameters["Difficulty"]
-		float players = 2f;
-		if(!resetParameters.TryGetValue("Players", out players))
+		teams.Clear();
+		switch((Competitiors)Utils.GetDictionaryIntDefault<string>(resetParameters, "Players", (int)defaultCompetitors))
 		{
-			players = 2f;
+			case Competitiors.AIvsAI:
+				teams.Add(new Team(externalBrains[0]));
+				teams.Add(new Team(externalBrains[1]));
+				break;
+			case Competitiors.HumanvsAI:
+				teams.Add(new Team(humanBrains[0]));
+				teams.Add(new Team(externalBrains[0]));
+				break;
+			case Competitiors.HumanvsHuman:
+				teams.Add(new Team(humanBrains[0]));
+				teams.Add(new Team(humanBrains[1]));
+				break;
+			default:
+				resetParameters["Players"] = (int)defaultCompetitors;
+				AcademyReset();
+				return;
 		}
-		switch(Mathf.RoundToInt(players))
-		{
-			case 0:
-				playerOne = externalBrains[0];
-				playerTwo = externalBrains[1];
-				break;
-			case 1:
-				playerOne = humanBrains[0];
-				playerTwo = externalBrains[0];
-				break;
-			case 2:
-				playerOne = humanBrains[0];
-				playerTwo = humanBrains[1];
-				break;
-		}
-		units.Clear();
 		generator.Generate(map, width, height, this);
-		playerOneScore = 0;
-		playerTwoScore = 0;
 	}
 
 	public void RegisterUnit(Soldier unit)
 	{
-		units.Add(unit);
+		for (int i = 0; i < teams.Count; i++)
+		{
+			if (teams[i].brain == unit.brain)
+			{
+				teams[i].units.Add(unit);
+				break;
+			}
+		}
 	}
 
 	public void UnregisterUnit(Soldier unit)
 	{
-		units.Remove(unit);
-		if (units.Count == 0)
-			done = true;
-		//Find Winner
-		bool both = false;
-		for (int i = 1; i < units.Count; i++)
+		for (int i = 0; i < teams.Count; i++)
 		{
-			both = both || units[i].brain != units[0].brain;
-		}
-		if (!both)
-		{
-			done = true;
-			//Give victory rewards
-			if (units[0].brain == playerOne)
+			if (teams[i].brain == unit.brain)
 			{
-				foreach (var item in playerOne.agents)
+				teams[i].units.Remove(unit);
+				if (teams[i].units.Count == 0)
 				{
-					item.Value.reward += REWARD_VICTORY;
-				}
-				foreach (var item in playerTwo.agents)
-				{
-					item.Value.reward -= REWARD_VICTORY;
-				}
-			}
-			else
-			{
-				foreach (var item in playerOne.agents)
-				{
-					item.Value.reward -= REWARD_VICTORY;
-				}
-				foreach (var item in playerTwo.agents)
-				{
-					item.Value.reward += REWARD_VICTORY;
+					//Lost
+					for (int j = 0; j < teams.Count; j++)
+					{
+						if (i==j)
+							foreach (var item in teams[j].brain.agents)
+								item.Value.reward -= REWARD_VICTORY;
+						else
+							foreach (var item in teams[j].brain.agents)
+								item.Value.reward += REWARD_VICTORY;
+					}
+					done = true;
 				}
 			}
 		}
@@ -116,18 +122,33 @@ public class MLAcademy : Academy {
 
 	public override void AcademyStep()
 	{
-		for (int i = 0; i < units.Count; i++)
+		float score = Time.fixedDeltaTime / goalTime;
+		for (int i = 0; i < teams.Count; i++)
 		{
-			if (units[i].goals > 0)
+			for (int j = 0; j < teams[i].units.Count; j++)
 			{
-				if (units[i].brain == playerOne)
-					playerOneScore += Time.fixedDeltaTime;
-				else
-					playerTwoScore += Time.fixedDeltaTime;
-				units[i].reward += REWARD_GOAL;
+				if (teams[i].units[j].goals > 0)
+				{
+					teams[i].score += score;
+					teams[i].units[j].reward += REWARD_GOAL;
+				}
+				if (teams[i].score > 1f)
+				{
+					//Won
+					for (int k = 0; k < teams.Count; k++)
+					{
+						if (i == k)
+							foreach (var item in teams[k].brain.agents)
+								item.Value.reward += REWARD_VICTORY;
+						else
+							foreach (var item in teams[k].brain.agents)
+								item.Value.reward -= REWARD_VICTORY;
+					}
+					done = true;
+				}
 			}
 		}
-		//TODO show and check scoring
+		//TODO show scoring
 	}
 
 }

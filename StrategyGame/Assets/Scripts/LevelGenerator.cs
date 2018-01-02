@@ -16,10 +16,7 @@ public class LevelGenerator : MonoBehaviour {
 	public GameObject soldier;
 	public GameObject goal;
 
-	List<GameObject> spawns;
-
 	void Awake () {
-		spawns = new List<GameObject>();
 	}
 
     public void Generate(Texture2D map, int width, int height, MLAcademy academy) {
@@ -64,15 +61,13 @@ public class LevelGenerator : MonoBehaviour {
 					}
 					else {
 						position.y = -(float)item.r / 255.0f;
-						var go = ObjectPool.Spawn (wall, position, Quaternion.identity);
-						spawns.Add (go);
+						ObjectPool.Spawn (wall, position, Quaternion.identity);
 						continue;
 					}
 				}
 				else if (item.r == 0 && item.b == 0)
 				{
-					var go = ObjectPool.Spawn(goal, position, Quaternion.identity);
-					spawns.Add(go);
+					ObjectPool.Spawn(goal, position, Quaternion.identity);
 				}
 			}
 		}
@@ -87,17 +82,15 @@ public class LevelGenerator : MonoBehaviour {
 				{
 					var position = new Vector3(x + offsetX, 0, y + offsetY);
 					GameObject go = ObjectPool.Spawn(soldier, position, Quaternion.LookRotation(floor.position-position, Vector3.up));
-					spawns.Add(go);
 					Soldier s = go.GetComponent<Soldier>();
-					s.SetTeam(academy.playerOne, playerOneColor, academy, aiCamera);
+					s.SetTeam(academy.teams[0].brain, playerOneColor, academy, aiCamera);
 				}
 				else if (item.r != 0 && item.g == 0 && item.b == 0)
 				{
 					var position = new Vector3(x + offsetX, 0, y + offsetY);
 					GameObject go = ObjectPool.Spawn(soldier, position, Quaternion.LookRotation(floor.position-position, Vector3.up));
-					spawns.Add(go);
 					Soldier s = go.GetComponent<Soldier>();
-					s.SetTeam(academy.playerTwo, playerTwoColor, academy, aiCamera);
+					s.SetTeam(academy.teams[1].brain, playerTwoColor, academy, aiCamera);
 				}
 			}
 		}
@@ -105,10 +98,6 @@ public class LevelGenerator : MonoBehaviour {
 
 	public void Despawn()
 	{
-		for (int i = 0; i < spawns.Count; i++)
-		{
-			spawns[i].SetActive(false);
-		}
-		spawns.Clear();
+		ObjectPool.DespawnAll();
 	}
 }

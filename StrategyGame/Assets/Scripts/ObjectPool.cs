@@ -68,17 +68,21 @@ public class ObjectPool : MonoBehaviour {
 		}
 	}
 
+	public static void DespawnAll()
+	{
+		for (int i = 0; i < instance.transform.childCount; i++)
+		{
+			instance.transform.GetChild(i).gameObject.SetActive(false);
+		}
+	}
+
 	public class PoolObject : MonoBehaviour
 	{
 		public GameObject prefab;
-		public void Despawn()
-		{
-			ObjectPool.Despawn(this);
-		}
 
 		private void OnDisable()
 		{
-			Despawn();
+			ObjectPool.Despawn(this);
 		}
 	}
 }

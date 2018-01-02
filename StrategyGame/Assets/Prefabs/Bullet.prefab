@@ -22,7 +22,7 @@ GameObject:
   - component: {fileID: 33196794545344930}
   - component: {fileID: 135357541723339006}
   - component: {fileID: 23178820626691290}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -39,7 +39,7 @@ GameObject:
   - component: {fileID: 4155121705664116}
   - component: {fileID: 54535131768048686}
   - component: {fileID: 114279897627454826}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Bullet
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -55,7 +55,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4843346798291060}
   - component: {fileID: 96707094737453810}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Trail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -265,7 +265,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 10
   damage: 17
-  safePeriod: 0.05
   liveTime: 7
 --- !u!135 &135357541723339006
 SphereCollider:
