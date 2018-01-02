@@ -25,13 +25,13 @@ public class MLAcademy : Academy {
 
 	public enum Competitiors
 	{
-		AIvsAI = 0,
-		HumanvsAI = 1,
-		HumanvsHuman = 2
+		AiVsAi = 0,
+		HumanVsAi = 1,
+		HumanVsHuman = 2
 	}
 
 	[Header("Brains")]
-	public Competitiors defaultCompetitors = Competitiors.HumanvsHuman;
+	public Competitiors defaultCompetitors = Competitiors.HumanVsHuman;
 	public Brain[] humanBrains;
 	public Brain[] externalBrains;
 	public Brain[] internalBrains;
@@ -59,15 +59,15 @@ public class MLAcademy : Academy {
 		teams.Clear();
 		switch((Competitiors)Utils.GetDictionaryIntDefault<string>(resetParameters, "Players", (int)defaultCompetitors))
 		{
-			case Competitiors.AIvsAI:
+			case Competitiors.AiVsAi:
 				teams.Add(new Team(externalBrains[0]));
 				teams.Add(new Team(externalBrains[1]));
 				break;
-			case Competitiors.HumanvsAI:
+			case Competitiors.HumanVsAi:
 				teams.Add(new Team(humanBrains[0]));
 				teams.Add(new Team(externalBrains[0]));
 				break;
-			case Competitiors.HumanvsHuman:
+			case Competitiors.HumanVsHuman:
 				teams.Add(new Team(humanBrains[0]));
 				teams.Add(new Team(humanBrains[1]));
 				break;
