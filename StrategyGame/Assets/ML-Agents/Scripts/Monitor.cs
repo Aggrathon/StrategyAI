@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
 using System.Linq;
 
 
@@ -187,8 +188,8 @@ public class Monitor : MonoBehaviour
     {
         try
         {
-            return JsonUtility.FromJson<float[]>(
-                JsonUtility.ToJson(input));
+            return JsonConvert.DeserializeObject<float[]>(
+                JsonConvert.SerializeObject(input, Formatting.None));
         }
         catch
         {
@@ -196,8 +197,8 @@ public class Monitor : MonoBehaviour
         try
         {
             return new float[1]
-            {JsonUtility.FromJson<float>(
-                    JsonUtility.ToJson(input))
+            {JsonConvert.DeserializeObject<float>(
+                    JsonConvert.SerializeObject(input, Formatting.None))
             };
         }
         catch
@@ -262,7 +263,7 @@ public class Monitor : MonoBehaviour
                             origin.x + paddingwidth + keyPixelWidth,
                             origin.y - (index + 1) * keyPixelHeight, 
                             keyPixelWidth, keyPixelHeight), 
-                        JsonUtility.ToJson(displayValues[key].value), valueStyle);
+                        JsonConvert.SerializeObject(displayValues[key].value, Formatting.None), valueStyle);
 
                 }
                 else if (displayValues[key].monitorDisplayType == MonitorType.slider)

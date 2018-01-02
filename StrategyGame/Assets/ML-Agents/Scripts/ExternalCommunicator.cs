@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+using Newtonsoft.Json;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -171,7 +173,7 @@ public class ExternalCommunicator : Communicator
     public Dictionary<string, float> GetResetParameters()
     {
         sender.Send(Encoding.ASCII.GetBytes("CONFIG_REQUEST"));
-        ResetParametersMessage resetParams = JsonUtility.FromJson<ResetParametersMessage>(Receive());
+        ResetParametersMessage resetParams = JsonConvert.DeserializeObject<ResetParametersMessage>(Receive());
         academy.isInference = !resetParams.train_model;
         return resetParams.parameters;
     }
@@ -196,7 +198,7 @@ public class ExternalCommunicator : Communicator
     /// Sends Academy parameters to external agent
     private void SendParameters(AcademyParameters envParams)
     {
-        string envMessage = JsonUtility.ToJson(envParams, true);
+        string envMessage = JsonConvert.SerializeObject(envParams, Formatting.Indented);
         sender.Send(Encoding.ASCII.GetBytes(envMessage));
     }
 
@@ -268,7 +270,7 @@ public class ExternalCommunicator : Communicator
             memories = concatenatedMemories,
             dones = concatenatedDones
         };
-        string envMessage = JsonUtility.ToJson(message, true);
+        string envMessage = JsonConvert.SerializeObject(message, Formatting.Indented);
         sender.Send(AppendLength(Encoding.ASCII.GetBytes(envMessage)));
         Receive();
         int i = 0;
@@ -304,7 +306,7 @@ public class ExternalCommunicator : Communicator
         // TO MODIFY	--------------------------------------------
         sender.Send(Encoding.ASCII.GetBytes("STEPPING"));
         string a = Receive();
-        AgentMessage agentMessage = JsonUtility.FromJson<AgentMessage>(a);
+        AgentMessage agentMessage = JsonConvert.DeserializeObject<AgentMessage>(a);
 
         foreach (Brain brain in brains)
         {
