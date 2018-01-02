@@ -215,7 +215,7 @@ public class Soldier : Agent {
 		}
 		else if (action > 0)
 		{
-			SetDestination(transform.position + Quaternion.Euler(0, action * 360 / 8, 0) * Vector3.forward*0.2f);
+			SetDestination(transform.position + Quaternion.Euler(0, action * 360 / 8, 0) * Vector3.forward);
 		}
 	}
 

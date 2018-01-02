@@ -57,7 +57,7 @@ public class MLAcademy : Academy {
 		generator.Despawn();
 		//TODO resetParameters["Difficulty"]
 		teams.Clear();
-		switch((Competitiors)Utils.GetDictionaryIntDefault<string>(resetParameters, "Players", (int)defaultCompetitors))
+		switch((Competitiors)Utils.GetDictionaryIntDefault<string>(resetParameters, "Player", (int)defaultCompetitors))
 		{
 			case Competitiors.AiVsAi:
 				teams.Add(new Team(externalBrains[0]));

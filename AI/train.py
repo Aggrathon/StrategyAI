@@ -9,6 +9,8 @@ from unityagents import UnityEnvironment
 
 DIR = 'network'
 BIN = '../Build/StrategyGame.exe'
+BRAIN_A = 'ExternalA'
+BRAIN_B = 'ExternalB'
 
 
 def train(epochs=100):
@@ -18,12 +20,10 @@ def train(epochs=100):
     env = UnityEnvironment(file_name=BIN)
     replay_buffer = []
     with tf.Session() as sess:
-        brainA = env.brains['ExternalA']
-        brainB = env.brains['ExternalB']
         try:
             saver.restore(sess, tf.train.latest_checkpoint(DIR))
         except:
-            sess.run(tf.initialize_all_variables())
+            sess.run(tf.global_variables_initializer())
         for e in range(epochs):
             #TODO check levels
             level = 0
@@ -31,13 +31,14 @@ def train(epochs=100):
             nnA = nn
             nnB = nn
             if level < 1:
-                env.reset(True, {"Player": 0, "Difficulty": 0.0})
+                brains = env.reset(False, {"Player": 0, "Difficulty": 0.0})
                 while not env.global_done:
-                    x = []
-                    for i in range(len(brainA.agents)):
-                        x.append(sess.run(nnA.output, {nnA.input_images: brainA.observations[i], nnA.input_vars: brainA.states[i]}))
-                    env.step({'ExternalA': np.argmax(np.asarray(x) + np.random.uniform(0.0, 1.0-level, x.shape), 1) })
-                    print(brainA.rewards)
+                    out = []
+                    for i in range(len(brains[BRAIN_A].agents)):
+                        x = np.asarray(sess.run(nnA.output, {nnA.input_images: brains[BRAIN_A].observations[0][i], nnA.input_vars: brains[BRAIN_A].states[i]}))
+                        out.append(np.argmax(np.asarray(x) + np.random.uniform(0.0, 1.0-level, x.shape)))
+                    brains = env.step({BRAIN_A: out, BRAIN_B: [-1, -1, -1, -1] })
+                    print(brains[BRAIN_A].rewards)
                 env.close()
                 return
 
