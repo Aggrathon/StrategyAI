@@ -15,6 +15,7 @@ public class PlayerBrain : MonoBehaviour {
 
 	public InputType inputMethod = InputType.mouse;
 	public GameObject marker;
+	public LayerMask raycastMask;
 
 	Soldier selected = null;
 	Brain brain;
@@ -27,6 +28,14 @@ public class PlayerBrain : MonoBehaviour {
 
 	private void Update()
 	{
+		if (selected != null)
+		{
+			if (selected.done || !selected.gameObject.activeSelf)
+			{
+				marker.SetActive(false);
+				selected = null;
+			}
+		}
 		switch (inputMethod)
 		{
 			case InputType.mouse:
@@ -42,11 +51,6 @@ public class PlayerBrain : MonoBehaviour {
 		if (selected)
 		{
 			marker.transform.position = new Vector3(selected.transform.position.x, marker.transform.position.y, selected.transform.position.z);
-			if (!selected.gameObject.activeSelf)
-			{
-				marker.SetActive(false);
-				selected = null;
-			}
 		}
 	}
 
@@ -67,12 +71,16 @@ public class PlayerBrain : MonoBehaviour {
 		if (Input.GetMouseButtonUp(0))
 		{
 			RaycastHit hit;
-			if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100f))
+			if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 100f, raycastMask.value))
 			{
-				Soldier sel = null;
-				if (hit.rigidbody != null)
+				if (hit.rigidbody == null)
 				{
-					sel = hit.rigidbody.GetComponent<Soldier>();
+					if(selected != null)
+						selected.SetDestination(hit.point);
+					return;
+				}
+				Soldier sel = hit.rigidbody.GetComponent<Soldier>();
+				if (sel != null) {
 					if (sel.brain != brain)
 					{
 						if (selected != null)
@@ -80,22 +88,28 @@ public class PlayerBrain : MonoBehaviour {
 					}
 					else
 					{
-						marker.SetActive(true);
 						if (selected == sel)
 						{
 							sel.StopMoving();
 						}
 						else
 						{
-							selected = sel;
+							Select(sel);
 						}
 					}
 				}
-				else if (selected != null)
+				else
 				{
 					selected.SetDestination(hit.point);
 				}
 			}
 		}
+	}
+
+	void Select(Soldier sel)
+	{
+		selected = sel;
+		marker.transform.position = new Vector3(selected.transform.position.x, marker.transform.position.y, selected.transform.position.z);
+		marker.gameObject.SetActive(true);
 	}
 }

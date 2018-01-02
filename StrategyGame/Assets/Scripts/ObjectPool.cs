@@ -70,6 +70,12 @@ public class ObjectPool : MonoBehaviour {
 
 	public static void DespawnAll()
 	{
+		if (instance == null)
+		{
+			GameObject go = new GameObject("ObjectPool");
+			instance = go.AddComponent<ObjectPool>();
+			return;
+		}
 		for (int i = 0; i < instance.transform.childCount; i++)
 		{
 			instance.transform.GetChild(i).gameObject.SetActive(false);
