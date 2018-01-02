@@ -1,22 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ScoreUI : MonoBehaviour {
 
 	public MLAcademy academy;
+	public Image timeImage;
+	public RectTransform playerOneScore;
+	public RectTransform playerTwoScore;
 
 	float[] cache = new float[] { -1, -1 };
 
 	void Update ()
 	{
-		SetScore(0, false);
-		SetScore(1, true);
+		SetScore(playerOneScore, 0, false);
+		SetScore(playerTwoScore, 1, true);
+		timeImage.fillAmount = 1.01f-(float)academy.currentStep/(float)academy.MaxSteps;
 	}
 
-	void SetScore(int index, bool reverse)
+	void SetScore(Transform tr, int index, bool reverse)
 	{
-		Transform tr = transform.GetChild(index);
 		if (academy.teams.Count > index && academy.teams[index].units.Count > 0)
 		{
 			tr.gameObject.SetActive(true);

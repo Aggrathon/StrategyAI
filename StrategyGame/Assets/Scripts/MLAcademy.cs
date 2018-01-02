@@ -45,6 +45,7 @@ public class MLAcademy : Academy {
 	public float goalTime = 15f;
 
 	public List<Team> teams;
+	public int MaxSteps { get { return maxSteps; } }
 
 	public override void InitializeAcademy()
 	{
@@ -148,7 +149,6 @@ public class MLAcademy : Academy {
 				}
 			}
 		}
-		//TODO show scoring
 	}
 
 }
