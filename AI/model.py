@@ -58,7 +58,8 @@ def cnn(data, outputs=None, rewards=None, sequence_lengths=None, batch_size=32, 
         loss_action = tf.losses.softmax_cross_entropy(outputs, logits)
         loss = loss_value + loss_action*rewards*tf.abs(value-rewards)
         adam = tf.train.AdamOptimizer(1e-4)
-        train = adam.minimize(loss)
+        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+            train = adam.minimize(loss)
 
         #summaries
         tf.summary.scalar("Value_Loss", loss_value)
