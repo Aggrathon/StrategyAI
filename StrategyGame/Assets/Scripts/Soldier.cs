@@ -49,6 +49,8 @@ public class Soldier : Agent {
 
 	private void FixedUpdate()
 	{
+		if (done)
+			return;
 		if (agent.isStopped || agent.isPathStale || !agent.hasPath)
 		{
 			if (target != null)
@@ -199,6 +201,8 @@ public class Soldier : Agent {
 
 	public override void AgentStep(float[] act)
 	{
+		if (done)
+			return;
 		int action = Mathf.RoundToInt(act[0]);
 		if (action < 1)
 		{
@@ -236,7 +240,7 @@ public class Soldier : Agent {
 	public override void AgentOnDone()
 	{
 		academy.UnregisterUnit(this);
-		gameObject.SetActive(false);
+		transform.position = new Vector3(0, 100, 0);
 	}
 
 	float VectorToAngle(Vector3 vec)
