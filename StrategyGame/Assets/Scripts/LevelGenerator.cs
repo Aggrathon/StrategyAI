@@ -30,7 +30,7 @@ public class LevelGenerator : MonoBehaviour {
 		floor.position = new Vector3(width * 0.5f-0.5f, 0, height * 0.5f-0.5f); ;
 		cameraMount.position = new Vector3(width * 0.5f - 0.5f, 0, height * 0.5f - 0.5f); ;
 		Color32[] pixels = map.GetPixels32();
-		SpawnLevel (pixels, map.width, map.height, (width-map.width)/2, (height-map.height)/2);
+		SpawnLevel (pixels, map.width, map.height, academy.goalCache, (width-map.width)/2, (height-map.height)/2);
 
 		//Calculate Navigation
 		var bounds = new Bounds(cameraMount.position, new Vector3(width, 1.5f, height));
@@ -48,7 +48,7 @@ public class LevelGenerator : MonoBehaviour {
 		
 	}
 
-	void SpawnLevel(Color32[] map, int width, int height, int offsetX=0, int offsetY=0)
+	void SpawnLevel(Color32[] map, int width, int height, HashSet<int> goalCache, int offsetX=0, int offsetY=0)
 	{
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
@@ -68,6 +68,7 @@ public class LevelGenerator : MonoBehaviour {
 				else if (item.r == 0 && item.b == 0)
 				{
 					ObjectPool.Spawn(goal, position, Quaternion.identity);
+					goalCache.Add(Utils.Int2Hash(x+offsetX, y+offsetY));
 				}
 			}
 		}

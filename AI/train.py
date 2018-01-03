@@ -2,16 +2,16 @@
     Train the neural network models with this script
 """
 
-from math import floor
+import os
 import tensorflow as tf
 import numpy as np
 from model import cnn, Model
-from unityagents import UnityEnvironment, BrainInfo
+from unityagents import UnityEnvironment
+from play import play
 
 DIR = 'network'
 BIN = '../Build/StrategyGame.exe'
-BRAIN_A = 'ExternalA'
-BRAIN_B = 'ExternalB'
+DECAY = 0.98
 
 def setup_session():
     """
@@ -26,76 +26,66 @@ def setup_session():
         saver.restore(sess, tf.train.latest_checkpoint(DIR))
     except:
         sess.run(tf.global_variables_initializer())
+    os.makedirs(DIR, exist_ok=True)
     return sess, saver, global_step, models, env
 
 def train(epochs=100):
     replay_buffer = []
     sess, saver, global_step, models, env = setup_session()
-    nn = models[0]
     with sess:
         for e in range(epochs):
-            #TODO check levels
-            level = 0
-            #TODO select models
-            if level < 1:
-                result, mem_a, _ = play(sess, nn, nn, env, 0, level, True, True)
-                replay_buffer.append(mem_a)
-                env.close()
-                return
-            saver.save(sess, DIR, global_step)
+            for i in range(100):
+                if len(replay_buffer) < 5:
+                    while len(replay_buffer) < 20:
+                        for nn in models:
+                            if nn.level < 1:
+                                result, mem_a, _ = play(sess, nn, np.random.choice(models), env, 0, nn.level, True, True)
+                                data = _process_data(mem_a)
+                                if result > 0.5:
+                                    replay_buffer.append(data)
+                                    replay_buffer.append(data)
+                                    replay_buffer.append(data)
+                                    replay_buffer.append(data)
+                                    nn.level += 0.2
+                                elif np.sum(data[3]) > 0.5:
+                                    replay_buffer.append(data)
+                                    replay_buffer.append(data)
+                                    nn.level += 0.05
+                                else:
+                                    nn.level *= 0.75
+                            else:
+                                print("Completed the first difficulty!")
+                                saver.save(sess, DIR, global_step)
+                                env.close()
+                                return
+                        print("%d / %d"%(len(replay_buffer), 20), models[0].level)
+                    np.random.shuffle(replay_buffer)
+                data = replay_buffer.pop()
+                for nn in models:
+                    nn.train(*data, sess)
+            saver.save(sess, os.path.join(DIR, 'model') , global_step)
+            print ("Saved epoch", e)
+    env.close()
 
-
-def _play_step(sess: tf.Session, model: Model, brain: BrainInfo, randomness=0.5):
-    out = []
-    for i, _ in enumerate(brain.agents):
-        if brain.local_done[i]:
-            out.append(-1)
-            continue
-        action = np.asarray(sess.run(model.output, {model.input_images: brain.observations[0][i], model.input_vars: brain.states[i]}))
-        if randomness > 0:
-            out.append(np.argmax(action + np.random.uniform(0.0, randomness, action.shape)))
-        else:
-            out.append(np.argmax(action))
-    return out
-
-def _play_randomness(difficulty=0.0, training=False):
-    #if not training:
-    #    return 0.0
-    if difficulty < 1.0:
-        return 1.0-difficulty
-    return 0.5
-
-def _play_record(memory: list, old: BrainInfo, new: BrainInfo):
-    if old.agents:
-        for i in range(len(old.agents)):
-            image = old.observations[0][i]
-            state = old.states[i]
-            action = new.previous_actions[i]
-            reward = new.rewards[i]
-            memory.append((image, state, action, reward))
-
-def play(sess: tf.Session, nn_a: Model, nn_b: Model, env: UnityEnvironment, players=0, difficulty=0, training=False, record=True):
-    """
-        Play a game
-    """
-    brains = env.reset(training, {"Player": players, "Difficulty": floor(difficulty)})
-    if record:
-        memory_a = []
-        memory_b = []
-    while not env.global_done:
-        rnd = _play_randomness(difficulty, training)
-        out_a = _play_step(sess, nn_a, brains[BRAIN_A], rnd)
-        out_b = _play_step(sess, nn_b, brains[BRAIN_B], rnd)
-        brains_old = brains
-        brains = env.step({BRAIN_A: out_a, BRAIN_B: out_b})
-        if record:
-            _play_record(memory_a, brains_old[BRAIN_A], brains[BRAIN_A])
-            _play_record(memory_b, brains_old[BRAIN_B], brains[BRAIN_B])
-    print(brains[BRAIN_A], brains[BRAIN_A].agents, brains[BRAIN_A].rewards)
-    if record:
-        return np.mean(brains[BRAIN_A].rewards), memory_a, memory_b
-    else:
-        return np.mean(brains[BRAIN_A].rewards)
+def _process_data(history: list):
+    images = []
+    variables = []
+    actions = []
+    reward = []
+    prev = np.zeros_like(history[0].rewards, np.float32)
+    for m in reversed(history):
+        prev = m.rewards + prev*DECAY + np.mean(m.rewards)*(1.0-DECAY)
+        m.rewards = prev
+    for i in range(len(history)-1):
+        old = history[i]
+        new = history[i+1]
+        for j in range(len(old.agents)):
+            if not old.local_done[j]:
+                images.append(old.observations[0][j])
+                variables.append(old.states[j])
+                actions.append(new.previous_actions[j])
+                reward.append(new.rewards[j])
+    return (images, variables, actions, reward, len(images))
 
 
 if __name__ == "__main__":

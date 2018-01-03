@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class WallColor : MonoBehaviour {
 
-	new public Renderer renderer;
+#pragma warning disable 0108
+	public Renderer renderer;
 	public Color highColor = new Color(0, 0, 0);
 	public Color lowColor = new Color(0.7f, 0.7f, 0.7f);
 

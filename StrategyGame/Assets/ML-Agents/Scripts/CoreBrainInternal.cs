@@ -15,8 +15,8 @@ using TensorFlow;
 /// CoreBrain which decides actions using internally embedded TensorFlow model.
 public class CoreBrainInternal : ScriptableObject, CoreBrain
 {
-
-    [SerializeField]
+#pragma warning disable 0414
+	[SerializeField]
     private bool broadcast = true;
 
     [System.Serializable]

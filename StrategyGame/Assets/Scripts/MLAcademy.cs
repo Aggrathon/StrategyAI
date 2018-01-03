@@ -45,11 +45,13 @@ public class MLAcademy : Academy {
 	public float goalTime = 15f;
 
 	public List<Team> teams;
+	public HashSet<int> goalCache;
 	public int MaxSteps { get { return maxSteps; } }
 
 	public override void InitializeAcademy()
 	{
 		teams = new List<Team>();
+		goalCache = new HashSet<int>();
 	}
 
 	public override void AcademyReset()
@@ -76,6 +78,7 @@ public class MLAcademy : Academy {
 				AcademyReset();
 				return;
 		}
+		goalCache.Clear();
 		generator.Generate(map, width, height, this);
 	}
 
@@ -128,27 +131,35 @@ public class MLAcademy : Academy {
 		{
 			for (int j = 0; j < teams[i].units.Count; j++)
 			{
-				if (teams[i].units[j].goals > 0)
+				teams[i].units[j].goal = goalCache.Contains(Utils.Float2Hash(teams[i].units[j].transform.position.x, teams[i].units[j].transform.position.z));
+			}
+			for (int j = 0; j < teams[i].units.Count; j++)
+			{
+				if (teams[i].units[j].goal)
 				{
 					teams[i].score += score;
-					teams[i].units[j].reward += REWARD_GOAL;
-				}
-				if (teams[i].score > 1f)
-				{
-					//Won
-					for (int k = 0; k < teams.Count; k++)
+					if (teams[i].score > 1f)
 					{
-						if (i == k)
-							foreach (var item in teams[k].brain.agents)
-								item.Value.reward += REWARD_VICTORY;
-						else
-							foreach (var item in teams[k].brain.agents)
-								item.Value.reward -= REWARD_VICTORY;
+						Winner(teams[i]);
 					}
-					done = true;
+					break;
 				}
 			}
 		}
+	}
+
+	void Winner(Team team)
+	{
+		for (int i = 0; i < teams.Count; i++)
+		{
+			if (teams[i] == team)
+				foreach (var item in teams[i].brain.agents)
+					item.Value.reward += REWARD_VICTORY;
+			else
+				foreach (var item in teams[i].brain.agents)
+					item.Value.reward -= REWARD_VICTORY;
+		}
+		done = true;
 	}
 
 }

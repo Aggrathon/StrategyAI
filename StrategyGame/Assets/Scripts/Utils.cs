@@ -24,4 +24,14 @@ public static class Utils
 		}
 		return value;
 	}
+
+	public static int Float2Hash(float a, float b)
+	{
+		return Int2Hash(Mathf.RoundToInt(a), Mathf.RoundToInt(b));
+	}
+
+	public static int Int2Hash(int a, int b)
+	{
+		return a + (b << 16);
+	}
 }

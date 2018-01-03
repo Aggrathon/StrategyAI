@@ -5,8 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class Bullet : MonoBehaviour
 {
-
-	new Rigidbody rigidbody;
+#pragma warning disable 0108
+	Rigidbody rigidbody;
 	TrailRenderer trail;
 
 	public float speed = 10f;
