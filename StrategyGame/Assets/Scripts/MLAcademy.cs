@@ -10,6 +10,7 @@ public class MLAcademy : Academy {
 	public const float REWARD_KILL = 0.2f;
 	public const float REWARD_GOAL = 0.005f;
 
+	[System.Serializable]
 	public class Team
 	{
 		public List<Soldier> units;
@@ -37,21 +38,20 @@ public class MLAcademy : Academy {
 	public Brain[] internalBrains;
 
 	[Header("Level")]
-	public Texture2D map;
+	public Texture2D level;
 	public LevelGenerator generator;
 	public int width = 60;
 	public int height = 30;
 	public Transform aiMarker;
 	public float goalTime = 15f;
 
-	public List<Team> teams;
-	public HashSet<int> goalCache;
+	[System.NonSerialized] public List<Team> teams;
+	[System.NonSerialized] public Map map;
 	public int MaxSteps { get { return maxSteps; } }
 
 	public override void InitializeAcademy()
 	{
 		teams = new List<Team>();
-		goalCache = new HashSet<int>();
 	}
 
 	public override void AcademyReset()
@@ -78,8 +78,7 @@ public class MLAcademy : Academy {
 				AcademyReset();
 				return;
 		}
-		goalCache.Clear();
-		generator.Generate(map, width, height, this);
+		map = generator.Generate(level, width, height, this);
 	}
 
 	public void RegisterUnit(Soldier unit)
@@ -131,7 +130,7 @@ public class MLAcademy : Academy {
 		{
 			for (int j = 0; j < teams[i].units.Count; j++)
 			{
-				teams[i].units[j].goal = goalCache.Contains(Utils.Float2Hash(teams[i].units[j].transform.position.x, teams[i].units[j].transform.position.z));
+				teams[i].units[j].goal = map.GetTile(teams[i].units[j].transform.position).goal;
 			}
 			for (int j = 0; j < teams[i].units.Count; j++)
 			{

@@ -8,19 +8,20 @@ from model import Model, BRAIN_A, BRAIN_B
 from unityagents import BrainInfo, UnityEnvironment
 
 
-def _play_step(sess: tf.Session, model: Model, brain: BrainInfo, randomness=0.5):
+def _play_step(sess: tf.Session, model: Model, brain: BrainInfo, difficulty, training):
     action = np.asarray(model.evaluate(sess, brain.observations[0], brain.states, len(brain.agents)))
-    if randomness > 0:
-        return np.argmax(action + np.random.uniform(0.0, randomness, action.shape), 1)
-    else:
-        return np.argmax(action, 1)
+    return _play_randomness(action, difficulty, training)
+        
 
-def _play_randomness(difficulty=0.0, training=False):
+def _play_randomness(data, difficulty=0.0, training=False):
     #if not training:
-    #    return 0.0
+    #    return np.argmax(data, 1)
     if difficulty < 1.0:
-        return 0.6-difficulty
-    return 0.5
+        shape = (data.shape[0], data.shape[1]//2)
+        limit = 0.6-difficulty
+        rnd = np.concatenate((np.random.uniform(0.0, limit, shape), np.random.uniform(0.0, limit*0.5, shape)), 1)
+        return np.argmax(data + rnd, 1)
+    return np.argmax(data, 1)
 
 def play(sess: tf.Session, nn_a: Model, nn_b: Model, env: UnityEnvironment, players=0.0, difficulty=0.0, training=True, record=True):
     """
@@ -31,9 +32,8 @@ def play(sess: tf.Session, nn_a: Model, nn_b: Model, env: UnityEnvironment, play
         memory_a = []
         memory_b = []
     while not env.global_done:
-        rnd = _play_randomness(difficulty, training)
-        out_a = _play_step(sess, nn_a, brains[BRAIN_A], rnd)
-        out_b = _play_step(sess, nn_b, brains[BRAIN_B], rnd)
+        out_a = _play_step(sess, nn_a, brains[BRAIN_A], difficulty, training)
+        out_b = _play_step(sess, nn_b, brains[BRAIN_B], difficulty, training)
         if record:
             memory_a.append(brains[BRAIN_A])
             memory_b.append(brains[BRAIN_B])

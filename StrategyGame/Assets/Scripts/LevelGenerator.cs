@@ -19,56 +19,53 @@ public class LevelGenerator : MonoBehaviour {
 	void Awake () {
 	}
 
-    public void Generate(Texture2D map, int width, int height, MLAcademy academy) {
-		if (width < map.width)
+    public Map Generate(Texture2D image, int width, int height, MLAcademy academy) {
+		if (width < image.width)
 			Debug.LogError("The map is wider than the level");
-		if (height < map.height)
+		if (height < image.height)
 			Debug.LogError("The map is higher then the level");
+		Map map = new Map(width, height);
 
 		//Spawn Objects
 		floor.localScale = new Vector3(width, 1, height);
 		floor.position = new Vector3(width * 0.5f-0.5f, 0, height * 0.5f-0.5f); ;
 		cameraMount.position = new Vector3(width * 0.5f - 0.5f, 0, height * 0.5f - 0.5f); ;
-		Color32[] pixels = map.GetPixels32();
-		SpawnLevel (pixels, map.width, map.height, academy.goalCache, (width-map.width)/2, (height-map.height)/2);
+		Color32[] pixels = image.GetPixels32();
+		SpawnLevel (pixels, image.width, image.height, map, (width-image.width)/2, (height-image.height)/2);
 
 		//Calculate Navigation
-		var bounds = new Bounds(cameraMount.position, new Vector3(width, 1.5f, height));
-		var sources = new List<NavMeshBuildSource>();
-		var markups = new List<NavMeshBuildMarkup>();
-		NavMeshBuilder.CollectSources(bounds, navMeshLayerMask.value, NavMeshCollectGeometry.PhysicsColliders, 0, markups, sources);
-		var data = NavMeshBuilder.BuildNavMeshData(NavMesh.GetSettingsByIndex(0), sources, bounds, Vector3.zero, Quaternion.identity);
-		if (data == null)
-			Debug.LogError("Could not create the Nav Mesh");
-		else
-			NavMesh.AddNavMeshData(data);
+		map.CalculateNavMesh();
 
 		//Spawn Units
-		SpawnUnits(pixels, map.width, map.height, academy, (width - map.width) / 2, (height - map.height) / 2);
-		
+		SpawnUnits(pixels, image.width, image.height, academy, (width - image.width) / 2, (height - image.height) / 2);
+
+		return map;
 	}
 
-	void SpawnLevel(Color32[] map, int width, int height, HashSet<int> goalCache, int offsetX=0, int offsetY=0)
+	void SpawnLevel(Color32[] colors, int width, int height, Map map, int offsetX=0, int offsetY=0)
 	{
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
-				var item = map [x + y * width];
+				var item = colors [x + y * width];
 				var position = new Vector3 (x+offsetX, 0, y+offsetY);
 				if (item.r == item.b && item.r == item.g) {
 					if (item.r == 255)
 					{
+						map.SetTile(x + offsetX, y + offsetY, false, 0);
 						continue;
 					}
-					else {
+					else
+					{
 						position.y = -(float)item.r / 255.0f;
+						map.SetTile(x + offsetX, y + offsetY, false, 1.0f+position.y);
 						ObjectPool.Spawn (wall, position, Quaternion.identity);
 						continue;
 					}
 				}
 				else if (item.r == 0 && item.b == 0)
 				{
+					map.SetTile(x + offsetX, y + offsetY, true, 0);
 					ObjectPool.Spawn(goal, position, Quaternion.identity);
-					goalCache.Add(Utils.Int2Hash(x+offsetX, y+offsetY));
 				}
 			}
 		}

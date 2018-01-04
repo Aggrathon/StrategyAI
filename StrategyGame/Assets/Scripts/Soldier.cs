@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody))]
 public class Soldier : Agent {
 
@@ -16,18 +15,23 @@ public class Soldier : Agent {
 
 	[Header("Soldier")]
 	public ReplaceMaterial[] teamColors;
+	public Image healthBar;
+	public Gradient healthColor;
+	public float maxHealth = 100f;
+
+	[Header("Shooting")]
 	public GameObject bullet;
 	public Transform shootingPoint;
 	public float shootingInterval = 0.5f;
 	public float shootingAngle = 10f;
 	public float shootingRandomness = 0.05f;
 	public float shootingRange = 25f;
-	public Image healthBar;
-	public Gradient healthColor;
-	public float maxHealth = 100f;
 
+	[Header("Movement")]
+	public float angularSpeed = 200f;
+	public float speed = 3f;
 
-	NavMeshAgent agent;
+	
 #pragma warning disable 0108
 	Rigidbody rigidbody;
 	float health;
@@ -35,26 +39,22 @@ public class Soldier : Agent {
 	MLAcademy academy;
 	Soldier target;
 	List<float> state;
+	List<Vector3> path;
 	[System.NonSerialized] public bool goal;
 
 	public override void InitializeAgent()
 	{
-		agent = GetComponent<NavMeshAgent>();
 		rigidbody = GetComponent<Rigidbody>();
-		agent.updatePosition = false;
 		health = maxHealth;
 		shootTime = Time.time;
 		state = new List<float>(new float[] { 0, 0, 0 });
+		path = new List<Vector3>();
 	}
 	
-	public bool SetDestination(Vector3 pos)
+	public void SetDestination(Vector3 pos)
 	{
-		if (agent.SetDestination(pos))
-		{
-			agent.isStopped = false;
-			return true;
-		}
-		return false;
+		path.Clear();
+		academy.map.GetPath(rigidbody.position, pos, ref path);
 	}
 
 	public void SetTargetDirection(float angle)
@@ -83,7 +83,7 @@ public class Soldier : Agent {
 
 	public void StopMoving()
 	{
-		agent.isStopped = true;
+		path.Clear();
 	}
 
 	public void SetTarget(Soldier target)
@@ -126,7 +126,7 @@ public class Soldier : Agent {
 		}
 		Vector3 dir = target.transform.position - transform.position;
 		Quaternion rotateTarget = Quaternion.LookRotation(dir, new Vector3(0, 1, 0));
-		Quaternion rotation = Quaternion.RotateTowards(rigidbody.rotation, rotateTarget, agent.angularSpeed);
+		Quaternion rotation = Quaternion.RotateTowards(rigidbody.rotation, rotateTarget, angularSpeed);
 		rigidbody.MoveRotation(rotation);
 		transform.rotation = rotation;
 		if (shootTime+shootingInterval < Time.time && Quaternion.Angle(rotation, rotateTarget) < shootingAngle)
@@ -169,7 +169,7 @@ public class Soldier : Agent {
 		this.academy = academy;
 		observations = new List<Camera>(new Camera[] { camera });
 		academy.RegisterUnit(this);
-		agent.isStopped = true;
+		path.Clear();
 	}
 
 
@@ -190,46 +190,49 @@ public class Soldier : Agent {
 			reward += MLAcademy.REWARD_GOAL;
 
 		int action = Mathf.RoundToInt(act[0]);
-
 		if (action > 7) //Target Command
 		{
 			float angle = (action - 8) * 360 / 8;
 			SetTargetDirection(angle);
-			agent.isStopped = true;
+			if (target != null)
+				path.Clear();
 		}
 		else if (action > 0 ) //Move Command
 		{
-			//Own calculations needed for fastforward training with few normal updates that the navigation usually uses
-			agent.isStopped = false;
 			Quaternion rotateTarget = Quaternion.Euler(0, action * 360 / 8, 0);
-			float dist = agent.speed * Time.fixedDeltaTime;
-			Vector3 pos = rigidbody.position + rotateTarget*Vector3.forward*dist;
-			NavMeshHit hit;
-			if (!NavMesh.Raycast(rigidbody.position, pos, out hit, NavMesh.AllAreas)) //Allows for multiple agent on the same position
-			{
-				rigidbody.MovePosition(pos);
-				agent.nextPosition = pos;
-				Quaternion rotation = Quaternion.RotateTowards(rigidbody.rotation, rotateTarget, agent.angularSpeed);
-				rigidbody.MoveRotation(rotation);
-			}
+			Vector3 dir = rotateTarget * Vector3.forward * 0.5f;
+			SetDestination(rigidbody.position + dir);
 		}
+	}
 
-		if (agent.isStopped || agent.isPathStale || !agent.hasPath)
+	private void FixedUpdate()
+	{
+		if (path.Count > 0)
 		{
-			if (target != null)
+			Vector3 dir = path[path.Count - 1] - rigidbody.position;
+			float mag = dir.magnitude;
+			if (path.Count != 1 && mag < 0.3)
 			{
-				Shoot();
+				path.RemoveAt(path.Count - 1);
+				dir = path[path.Count - 1] - rigidbody.position;
+				mag = dir.magnitude;
 			}
-			else if (action < 1) //No Action Command
+			if (path.Count > 1 || mag > speed * Time.fixedDeltaTime)
 			{
-				FindClosestEnemy();
+				Vector3 pos = rigidbody.position + dir * (speed * Time.fixedDeltaTime / mag);
+				Quaternion rotation = Quaternion.RotateTowards(rigidbody.rotation, Quaternion.LookRotation(dir, Vector3.up), angularSpeed);
+				rigidbody.MovePosition(pos);
+				rigidbody.MoveRotation(rotation);
+				return;
 			}
 		}
-		else
+		if (target != null)
 		{
-			Vector3 pos = rigidbody.position + agent.velocity * Time.fixedDeltaTime;
-			rigidbody.MovePosition(pos);
-			agent.nextPosition = pos;
+			Shoot();
+		}
+		else if (brain.brainType == BrainType.Player)
+		{
+			FindClosestEnemy();
 		}
 	}
 
@@ -240,9 +243,7 @@ public class Soldier : Agent {
 		shootTime = Time.time;
 		reward = 0;
 		target = null;
-		agent.Warp(transform.position);
-		agent.isStopped = true;
-		agent.ResetPath();
+		path.Clear();
 		goal = false;
 	}
 
