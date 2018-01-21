@@ -15,6 +15,10 @@ DECAY = 0.975
 MAX_LEVEL = 3
 
 class Trainer():
+    """
+        Class for training neural network models
+        Use 'with' for automatic cleanup
+    """
     def __init__(self, network_directory=DIR):
         self.models = [Model(cnn)]
         self.saver = tf.train.Saver()
@@ -23,7 +27,7 @@ class Trainer():
         self.sess = tf.Session()
         try:
             self.saver.restore(self.sess, tf.train.latest_checkpoint(network_directory))
-        except:
+        except: #pylint ignore=W0702
             self.sess.run(tf.global_variables_initializer())
         os.makedirs(DIR, exist_ok=True)
         self.replay_buffer = []
@@ -49,13 +53,16 @@ class Trainer():
         for nn in self.models:
             if self.evaluate(nn):
                 nn.randomnesss = max(0.1, nn.randomnesss-0.1)
-                nn.level += 1
+                nn.level = min(MAX_LEVEL, nn.level+1)
                 while self.evaluate(nn) and nn.level <= MAX_LEVEL:
                     nn.randomnesss = 2 / (3 + nn.level) + 0.2
                     nn.level += 1
-                nn.level -= 1
+                if nn.randomnesss > 0.1:
+                    nn.level -= 1
             else:
-                nn.randomnesss = min(1.0, nn.randomnesss+0.1)
+                nn.randomnesss += 0.1
+                if nn.randomnesss >= 1.0:
+                    nn.level = max(0, nn.level-1)
 
     def _fill_replay_buffer(self):
         while len(self.replay_buffer) < 40:
@@ -64,7 +71,6 @@ class Trainer():
                 self._add_to_replay_buffer(mem_a, result)
                 if nn.level > 1:
                     self._add_to_replay_buffer(mem_b, -result)
-            #TODO
             print("Filling replay buffer: %d / %d"%(len(self.replay_buffer), 40))
         np.random.shuffle(self.replay_buffer)
 
@@ -75,11 +81,15 @@ class Trainer():
             self.replay_buffer.append(data)
         if result > 0.3:
             self.replay_buffer.append(data)
-        if result > 0.0:
+        if result > 0.1:
             self.replay_buffer.append(data)
-        self.replay_buffer.append(data)
+        if result != 0.0:
+            self.replay_buffer.append(data)
 
     def close(self):
+        """
+            Close all sessions and connections
+        """
         self.sess.close()
         self.env.close()
 
@@ -89,6 +99,10 @@ class Trainer():
         self.close()
 
     def train(self, epochs=100):
+        """
+            Train the models for a number of epochs.
+            An epoch is 100 iterations long.
+        """
         for e in range(epochs):
             self.find_levels()
             for i in range(100):
@@ -97,8 +111,8 @@ class Trainer():
                 data = self.replay_buffer.pop()
                 for nn in self.models:
                     nn.train(*data, self.sess)
-            self.saver.save(self.sess, os.path.join(DIR, 'model') , self.global_step)
-            print ("Saved epoch", e)
+            self.saver.save(self.sess, os.path.join(DIR, 'model'), self.global_step)
+            print("Saved epoch", e)
 
 
 def _process_data(history: list):
