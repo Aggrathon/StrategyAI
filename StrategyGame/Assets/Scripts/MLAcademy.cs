@@ -45,7 +45,8 @@ public class MLAcademy : Academy {
 	public Brain[] randomBrains;
 
 	[Header("Level")]
-	public Texture2D level;
+	public MapList[] levels;
+	public int defaultLevel = 3;
 	public LevelGenerator generator;
 	public int width = 60;
 	public int height = 30;
@@ -59,12 +60,13 @@ public class MLAcademy : Academy {
 	public override void InitializeAcademy()
 	{
 		teams = new List<Team>();
+		resetParameters["Player"] = (int)defaultCompetitors;
+		resetParameters["Difficulty"] = defaultLevel;
 	}
 
 	public override void AcademyReset()
 	{
 		generator.Despawn();
-		//TODO resetParameters["Difficulty"]
 		teams.Clear();
 		switch((Competitiors)Utils.GetDictionaryIntDefault<string>(resetParameters, "Player", (int)defaultCompetitors))
 		{
@@ -85,12 +87,12 @@ public class MLAcademy : Academy {
 				teams.Add(new Team(humanBrains[0]));
 				break;
 			case Competitiors.AiVsRandom:
-				teams.Add(new Team(humanBrains[0]));
+				teams.Add(new Team(externalBrains[0]));
 				teams.Add(new Team(randomBrains[0]));
 				break;
 			case Competitiors.RandomVsAi:
 				teams.Add(new Team(randomBrains[0]));
-				teams.Add(new Team(humanBrains[0]));
+				teams.Add(new Team(externalBrains[0]));
 				break;
 			case Competitiors.HumanVsRandom:
 				teams.Add(new Team(humanBrains[0]));
@@ -109,6 +111,7 @@ public class MLAcademy : Academy {
 				AcademyReset();
 				return;
 		}
+		var level = levels[Mathf.Clamp(Utils.GetDictionaryIntDefault<string>(resetParameters, "Difficulty", defaultLevel), 0, levels.Length-1)].GetMap();
 		map = generator.Generate(level, width, height, this);
 	}
 
@@ -169,6 +172,14 @@ public class MLAcademy : Academy {
 		float score = Time.fixedDeltaTime / goalTime;
 		for (int i = 0; i < teams.Count; i++)
 		{
+			if (teams[i].units.Count == 0)
+			{
+				for (int j = 0; j < teams.Count; j++)
+				{
+					if (i != j)
+						Winner(teams[j]);
+				}
+			}
 			for (int j = 0; j < teams[i].units.Count; j++)
 			{
 				teams[i].units[j].goal = map.GetTile(teams[i].units[j].transform.position).goal;

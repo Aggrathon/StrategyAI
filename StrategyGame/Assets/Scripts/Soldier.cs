@@ -146,15 +146,20 @@ public class Soldier : Agent {
 		health -= value;
 		if (health < 0)
 		{
+			AgentReset();
+			rigidbody.MovePosition(new Vector3(1000, 1000, 1000));
 			done = true;
 			reward -= MLAcademy.REWARD_DIE;
 			return MLAcademy.REWARD_KILL;
 		}
-		healthBar.fillAmount = health / maxHealth;
-		healthBar.color = healthColor.Evaluate(1-health / maxHealth);
-		float rw = health / maxHealth * MLAcademy.REWARD_HIT;
-		reward -= rw;
-		return rw;
+		else
+		{
+			healthBar.fillAmount = health / maxHealth;
+			healthBar.color = healthColor.Evaluate(1 - health / maxHealth);
+			float rw = health / maxHealth * MLAcademy.REWARD_HIT;
+			reward -= rw;
+			return rw;
+		}
 	}
 
 	public void SetTeam(Brain brain, Material color, MLAcademy academy, Camera camera)
@@ -169,7 +174,7 @@ public class Soldier : Agent {
 		this.academy = academy;
 		observations = new List<Camera>(new Camera[] { camera });
 		academy.RegisterUnit(this);
-		path.Clear();
+		AgentReset();
 	}
 
 
@@ -218,6 +223,8 @@ public class Soldier : Agent {
 
 	private void FixedUpdate()
 	{
+		if (done)
+			return;
 		if (path.Count > 0)
 		{
 			Vector3 dir = path[path.Count - 1] - rigidbody.position;
@@ -250,18 +257,19 @@ public class Soldier : Agent {
 	public override void AgentReset()
 	{
 		health = maxHealth;
-		DoDamage(0);
+		healthBar.fillAmount = health / maxHealth;
+		healthBar.color = healthColor.Evaluate(1 - health / maxHealth);
 		shootTime = Time.time;
 		reward = 0;
 		target = null;
 		path.Clear();
 		goal = false;
+		done = false;
 	}
 
 	public override void AgentOnDone()
 	{
 		academy.UnregisterUnit(this);
-		transform.position = new Vector3(0, 100, 0);
 	}
 
 	float VectorToAngle(Vector3 vec)

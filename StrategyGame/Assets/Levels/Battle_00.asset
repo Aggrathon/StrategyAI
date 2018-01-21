@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2131af90cdc72044e86128d0fe0304b4, type: 3}
+  m_Name: Battle_00
+  m_EditorClassIdentifier: 
+  maps:
+  - {fileID: 2800000, guid: 94d28a7e36986444e88a54f0a6db30f1, type: 3}
+  - {fileID: 2800000, guid: 6cde75cdfef7bf14cb2dde0198c886d7, type: 3}
+  - {fileID: 2800000, guid: 04d1ccc8a265d6245b801a2142e8d369, type: 3}
+  - {fileID: 2800000, guid: 9573e1b40a7a1394f991da0b62ff7a73, type: 3}
+  flipX: 1
+  flipY: 1
+  switchTeams: 1

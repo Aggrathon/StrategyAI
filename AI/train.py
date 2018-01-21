@@ -81,8 +81,6 @@ class Trainer():
             self.replay_buffer.append(data)
         if result > 0.3:
             self.replay_buffer.append(data)
-        if result > 0.1:
-            self.replay_buffer.append(data)
         if result != 0.0:
             self.replay_buffer.append(data)
 

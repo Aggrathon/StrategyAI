@@ -6,18 +6,15 @@ using UnityEngine;
 public class RandomAI : MonoBehaviour, Decision {
 
 	Brain brain;
-	float[] actions;
 
 	private void Awake()
 	{
 		brain = GetComponent<Brain>();
-		actions = new float[1];
 	}
 
 	public float[] Decide(List<float> state, List<Camera> observation, float reward, bool done, float[] memory)
 	{
-		actions[0] = Random.Range(0.0f, brain.brainParameters.actionSize);
-		return actions;
+		return new float[] { Random.Range(0, brain.brainParameters.actionSize) };
 	}
 
 	public float[] MakeMemory(List<float> state, List<Camera> observation, float reward, bool done, float[] memory)

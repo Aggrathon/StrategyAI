@@ -1,0 +1,11 @@
+{
+    "name": "ML-Agents-Editor",
+    "references": [
+        "ML-Agents"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

@@ -6557,13 +6557,13 @@ MonoBehaviour:
     targetFrameRate: 60
   defaultResetParameters:
   - key: Difficulty
-    value: 0
+    value: 3
   - key: Player
     value: 1
   done: 0
   episodeCount: 0
   currentStep: 0
-  defaultCompetitors: 3
+  defaultCompetitors: 6
   humanBrains:
   - {fileID: 1896059211}
   - {fileID: 377887345}
@@ -6574,7 +6574,11 @@ MonoBehaviour:
   randomBrains:
   - {fileID: 904439024}
   - {fileID: 327833517}
-  level: {fileID: 2800000, guid: 7a37517d30cdf184d86b294be439b3f8, type: 3}
+  levels:
+  - {fileID: 11400000, guid: 69fef038faef2604b80699852005531c, type: 2}
+  - {fileID: 11400000, guid: b510331ac4067bf4798327e0e03d08f9, type: 2}
+  - {fileID: 11400000, guid: 8805393bf34d3354893d5c7c9176ce3b, type: 2}
+  defaultLevel: 3
   generator: {fileID: 488000729}
   width: 35
   height: 25

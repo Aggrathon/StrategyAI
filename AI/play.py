@@ -41,7 +41,8 @@ def play(sess: tf.Session, nn_a: Model, nn_b: Model, env: UnityEnvironment, play
         brains = env.step({BRAIN_A: out_a, BRAIN_B: out_b})
         if record:
             memory_a.append(brains[BRAIN_A])
-            memory_b.append(brains[BRAIN_B])
+            if nn_b:
+                memory_b.append(brains[BRAIN_B])
     reward = (np.sum(brains[BRAIN_A].rewards) - np.sum(brains[BRAIN_B].rewards)) \
         / (len(brains[BRAIN_A].rewards) + len(brains[BRAIN_A].rewards))
     if record:

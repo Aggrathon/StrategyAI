@@ -30,7 +30,7 @@ public class PlayerBrain : MonoBehaviour {
 	{
 		if (selected != null)
 		{
-			if (selected.done || !selected.gameObject.activeSelf)
+			if (selected.done || !selected.gameObject.activeSelf || brain != selected.brain)
 			{
 				marker.SetActive(false);
 				selected = null;
@@ -48,7 +48,7 @@ public class PlayerBrain : MonoBehaviour {
 				HandleControllerInput();
 				break;
 		}
-		if (selected)
+		if (selected != null)
 		{
 			marker.transform.position = new Vector3(selected.transform.position.x, marker.transform.position.y, selected.transform.position.z);
 		}
