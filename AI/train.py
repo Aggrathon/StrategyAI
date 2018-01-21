@@ -7,74 +7,110 @@ import tensorflow as tf
 import numpy as np
 from model import cnn, Model
 from unityagents import UnityEnvironment
-from play import play
+import play
 
 DIR = 'network'
 BIN = '../Build/StrategyGame.exe'
-DECAY = 0.98
+DECAY = 0.975
+MAX_LEVEL = 3
 
-def setup_session():
-    """
-        Creates the tf session and unity enviroment
-    """
-    models = [Model(cnn)]
-    saver = tf.train.Saver()
-    env = UnityEnvironment(file_name=BIN)
-    global_step = tf.train.get_global_step()
-    sess = tf.Session()
-    try:
-        saver.restore(sess, tf.train.latest_checkpoint(DIR))
-    except:
-        sess.run(tf.global_variables_initializer())
-    os.makedirs(DIR, exist_ok=True)
-    return sess, saver, global_step, models, env
+class Trainer():
+    def __init__(self, network_directory=DIR):
+        self.models = [Model(cnn)]
+        self.saver = tf.train.Saver()
+        self.env = UnityEnvironment(file_name=BIN)
+        self.global_step = tf.train.get_global_step()
+        self.sess = tf.Session()
+        try:
+            self.saver.restore(self.sess, tf.train.latest_checkpoint(network_directory))
+        except:
+            self.sess.run(tf.global_variables_initializer())
+        os.makedirs(DIR, exist_ok=True)
+        self.replay_buffer = []
 
-def train(epochs=100):
-    replay_buffer = []
-    sess, saver, global_step, models, env = setup_session()
-    with sess:
+    def evaluate(self, nn: Model):
+        """
+            Evaluates the training of a model
+        """
+        res, mem, _ = play.play(self.sess, nn, None, self.env, play.PLAYERS_AI_VS_RANDOM, 0, nn.level, True, True)
+        self._add_to_replay_buffer(mem, res)
+        if res < 0.0:
+            return False
+        res, _, mem = play.play(self.sess, nn, None, self.env, play.PLAYERS_RANDOM_VS_AI, 0, nn.level, True, True)
+        self._add_to_replay_buffer(mem, -res)
+        if res < 0.0:
+            return False
+        return True
+
+    def find_levels(self):
+        """
+            Finds the appropriate level of the models
+        """
+        for nn in self.models:
+            if self.evaluate(nn):
+                nn.randomnesss = max(0.1, nn.randomnesss-0.1)
+                nn.level += 1
+                while self.evaluate(nn) and nn.level <= MAX_LEVEL:
+                    nn.randomnesss = 2 / (3 + nn.level) + 0.2
+                    nn.level += 1
+                nn.level -= 1
+            else:
+                nn.randomnesss = min(1.0, nn.randomnesss+0.1)
+
+    def _fill_replay_buffer(self):
+        while len(self.replay_buffer) < 40:
+            for nn in self.models:
+                result, mem_a, mem_b = play(self.sess, nn, np.random.choice(self.models), self.env, nn.randomnesss, nn.level, True, True)
+                self._add_to_replay_buffer(mem_a, result)
+                if nn.level > 1:
+                    self._add_to_replay_buffer(mem_b, -result)
+            #TODO
+            print("Filling replay buffer: %d / %d"%(len(self.replay_buffer), 40))
+        np.random.shuffle(self.replay_buffer)
+
+    def _add_to_replay_buffer(self, data, result):
+        data = _process_data(data)
+        if result > 0.5:
+            self.replay_buffer.append(data)
+            self.replay_buffer.append(data)
+        if result > 0.3:
+            self.replay_buffer.append(data)
+        if result > 0.0:
+            self.replay_buffer.append(data)
+        self.replay_buffer.append(data)
+
+    def close(self):
+        self.sess.close()
+        self.env.close()
+
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def train(self, epochs=100):
         for e in range(epochs):
+            self.find_levels()
             for i in range(100):
-                if len(replay_buffer) < 5:
-                    while len(replay_buffer) < 20:
-                        for nn in models:
-                            if nn.level < 1:
-                                result, mem_a, _ = play(sess, nn, np.random.choice(models), env, 0, nn.level, True, True)
-                                data = _process_data(mem_a)
-                                if result > 0.5:
-                                    replay_buffer.append(data)
-                                    replay_buffer.append(data)
-                                    replay_buffer.append(data)
-                                    replay_buffer.append(data)
-                                    nn.level += 0.2
-                                elif np.sum(data[3]) > 0.5:
-                                    replay_buffer.append(data)
-                                    replay_buffer.append(data)
-                                    nn.level += 0.05
-                                else:
-                                    nn.level *= 0.75
-                            else:
-                                print("Completed the first difficulty!")
-                                saver.save(sess, DIR, global_step)
-                                env.close()
-                                return
-                        print("%d / %d"%(len(replay_buffer), 20), models[0].level)
-                    np.random.shuffle(replay_buffer)
-                data = replay_buffer.pop()
-                for nn in models:
-                    nn.train(*data, sess)
-            saver.save(sess, os.path.join(DIR, 'model') , global_step)
+                if len(self.replay_buffer) < 5:
+                    self._fill_replay_buffer()
+                data = self.replay_buffer.pop()
+                for nn in self.models:
+                    nn.train(*data, self.sess)
+            self.saver.save(self.sess, os.path.join(DIR, 'model') , self.global_step)
             print ("Saved epoch", e)
-    env.close()
+
 
 def _process_data(history: list):
     images = []
     variables = []
     actions = []
     reward = []
-    prev = np.zeros_like(history[0].rewards, np.float32)
-    for m in reversed(history):
-        prev = m.rewards + prev*DECAY + np.mean(m.rewards)*(1.0-DECAY)
+    if np.mean(history[-1].rewards) < 0.9 and np.mean(history[-1].rewards) > -0.9:
+        history[-1].rewards = np.zeros_like(history[-1], np.float32)
+    prev = history[-1].rewards
+    for m in reversed(history[:-1]):
+        prev = m.rewards + prev*DECAY + np.mean(m.rewards)*(1.0-(1.0-DECAY)*20)
         m.rewards = prev
     for i in range(len(history)-1):
         old = history[i]
@@ -89,4 +125,5 @@ def _process_data(history: list):
 
 
 if __name__ == "__main__":
-    train()
+    with Trainer() as t:
+        t.train()

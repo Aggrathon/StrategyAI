@@ -19,7 +19,8 @@ class Model():
         Wrapper for the different model functions
     """
     def __init__(self, model_fn):
-        self.level = 0.2
+        self.level = 0
+        self.randomnesss = 1.0
         self.input_images = tf.placeholder(tf.float32)
         self.input_vars = tf.placeholder(tf.float32)
         self.output_vars = tf.placeholder(tf.float32)

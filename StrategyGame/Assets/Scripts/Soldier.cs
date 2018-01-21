@@ -197,11 +197,22 @@ public class Soldier : Agent {
 			if (target != null)
 				path.Clear();
 		}
-		else if (action > 0 ) //Move Command
+		else if (action >= 0 ) //Move Command
 		{
 			Quaternion rotateTarget = Quaternion.Euler(0, action * 360 / 8, 0);
 			Vector3 dir = rotateTarget * Vector3.forward * 0.5f;
 			SetDestination(rigidbody.position + dir);
+		}
+		else if (brain.brainType != BrainType.Player)
+		{
+			Debug.LogError("Cannot give "+act[0]+" as an action when the brain is not human!");
+			act[0] = Random.Range(0.0f, brain.brainParameters.actionSize);
+			for (int i = 0; i < teamColors.Length; i++)
+			{
+				var mats = teamColors[i].renderer.materials;
+				mats[teamColors[i].index].color = Color.black;
+				teamColors[i].renderer.materials = mats;
+			}
 		}
 	}
 

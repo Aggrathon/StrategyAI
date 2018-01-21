@@ -28,7 +28,13 @@ public class MLAcademy : Academy {
 	{
 		AiVsAi = 0,
 		HumanVsAi = 1,
-		HumanVsHuman = 2
+		AiVsHuman = 2,
+		HumanVsHuman = 3,
+		AiVsRandom = 4,
+		RandomVsAi = 5,
+		HumanVsRandom = 6,
+		RandomVsHuman = 7,
+		RandomVsRandom = 8
 	}
 
 	[Header("Brains")]
@@ -36,6 +42,7 @@ public class MLAcademy : Academy {
 	public Brain[] humanBrains;
 	public Brain[] externalBrains;
 	public Brain[] internalBrains;
+	public Brain[] randomBrains;
 
 	[Header("Level")]
 	public Texture2D level;
@@ -72,6 +79,30 @@ public class MLAcademy : Academy {
 			case Competitiors.HumanVsHuman:
 				teams.Add(new Team(humanBrains[0]));
 				teams.Add(new Team(humanBrains[1]));
+				break;
+			case Competitiors.AiVsHuman:
+				teams.Add(new Team(externalBrains[0]));
+				teams.Add(new Team(humanBrains[0]));
+				break;
+			case Competitiors.AiVsRandom:
+				teams.Add(new Team(humanBrains[0]));
+				teams.Add(new Team(randomBrains[0]));
+				break;
+			case Competitiors.RandomVsAi:
+				teams.Add(new Team(randomBrains[0]));
+				teams.Add(new Team(humanBrains[0]));
+				break;
+			case Competitiors.HumanVsRandom:
+				teams.Add(new Team(humanBrains[0]));
+				teams.Add(new Team(randomBrains[0]));
+				break;
+			case Competitiors.RandomVsHuman:
+				teams.Add(new Team(randomBrains[0]));
+				teams.Add(new Team(humanBrains[0]));
+				break;
+			case Competitiors.RandomVsRandom:
+				teams.Add(new Team(randomBrains[0]));
+				teams.Add(new Team(randomBrains[1]));
 				break;
 			default:
 				resetParameters["Players"] = (int)defaultCompetitors;
@@ -125,6 +156,16 @@ public class MLAcademy : Academy {
 
 	public override void AcademyStep()
 	{
+		if (currentStep >= maxSteps)
+		{
+			for (int i = 0; i < teams.Count; i++)
+			{
+				for (int j = 0; j < teams[i].units.Count; j++)
+				{
+					teams[i].units[j].reward = teams[i].score;
+				}
+			}
+		}
 		float score = Time.fixedDeltaTime / goalTime;
 		for (int i = 0; i < teams.Count; i++)
 		{

@@ -7,23 +7,27 @@ import numpy as np
 from model import Model, BRAIN_A, BRAIN_B
 from unityagents import BrainInfo, UnityEnvironment
 
+PLAYERS_AI_VS_AI = 0
+PLAYERS_HUMAN_VS_AI = 1
+PLAYERS_AI_VS_HUMAN = 2
+PLAYERS_HUMAN_VS_HUMAN = 3
+PLAYERS_AI_VS_RANDOM = 4
+PLAYERS_RANDOM_VS_AI = 5
+PLAYERS_HUMAN_VS_RANDOM = 6
+PLAYERS_RANDOM_VS_HUMAN = 7
+PLAYERS_RANDOM_VS_RANDOM = 8
 
-def _play_step(sess: tf.Session, model: Model, brain: BrainInfo, difficulty, training):
+def _play_step(sess: tf.Session, model: Model, brain: BrainInfo, randomness):
+    if randomness >= 1:
+        return np.floor(np.random.uniform(0, 17, (len(brain.agents), 1))
     action = np.asarray(model.evaluate(sess, brain.observations[0], brain.states, len(brain.agents)))
-    return _play_randomness(action, difficulty, training)
-        
+    if randomness > 0:
+        rnd = np.random.uniform(0.0, randomness, action.shape)
+        return np.argmax(action + rnd, 1)
+    return np.argmax(action, 1)
 
-def _play_randomness(data, difficulty=0.0, training=False):
-    #if not training:
-    #    return np.argmax(data, 1)
-    if difficulty < 1.0:
-        shape = (data.shape[0], data.shape[1]//2)
-        limit = 0.6-difficulty
-        rnd = np.concatenate((np.random.uniform(0.0, limit, shape), np.random.uniform(0.0, limit*0.5, shape)), 1)
-        return np.argmax(data + rnd, 1)
-    return np.argmax(data, 1)
 
-def play(sess: tf.Session, nn_a: Model, nn_b: Model, env: UnityEnvironment, players=0.0, difficulty=0.0, training=True, record=True):
+def play(sess: tf.Session, nn_a: Model, nn_b: Model, env: UnityEnvironment, players=PLAYERS_AI_VS_AI, randomness=0.0, difficulty=0.0, training=True, record=True):
     """
         Play a game
     """
@@ -32,12 +36,12 @@ def play(sess: tf.Session, nn_a: Model, nn_b: Model, env: UnityEnvironment, play
         memory_a = []
         memory_b = []
     while not env.global_done:
-        out_a = _play_step(sess, nn_a, brains[BRAIN_A], difficulty, training)
-        out_b = _play_step(sess, nn_b, brains[BRAIN_B], difficulty, training)
+        out_a = _play_step(sess, nn_a, brains[BRAIN_A], randomness)
+        out_b = _play_step(sess, nn_b, brains[BRAIN_B], randomness) if nn_b else []
+        brains = env.step({BRAIN_A: out_a, BRAIN_B: out_b})
         if record:
             memory_a.append(brains[BRAIN_A])
             memory_b.append(brains[BRAIN_B])
-        brains = env.step({BRAIN_A: out_a, BRAIN_B: out_b})
     reward = (np.sum(brains[BRAIN_A].rewards) - np.sum(brains[BRAIN_B].rewards)) \
         / (len(brains[BRAIN_A].rewards) + len(brains[BRAIN_A].rewards))
     if record:
