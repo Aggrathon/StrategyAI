@@ -6554,8 +6554,8 @@ MonoBehaviour:
     width: 84
     height: 60
     qualityLevel: 0
-    timeScale: 100
-    targetFrameRate: 10
+    timeScale: 75
+    targetFrameRate: 1
   inferenceConfiguration:
     width: 1280
     height: 720

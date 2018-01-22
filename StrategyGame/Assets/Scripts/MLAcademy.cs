@@ -9,7 +9,7 @@ public class MLAcademy : Academy {
 	public const float REWARD_DIE = 0.5f;
 	public const float REWARD_KILL = 0.2f;
 	public const float REWARD_GOAL = 0.005f;
-	public const float REWARD_CONSTANT_PENALTY = 0.001f;
+	public const float REWARD_CONSTANT_PENALTY = 0.0001f;
 
 	[System.Serializable]
 	public class Team

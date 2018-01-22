@@ -11,7 +11,7 @@ INPUT_COLORS = 3
 OUTPUTS = 16
 BRAIN_A = 'ExternalA'
 BRAIN_B = 'ExternalB'
-LEARNING_RATE = 5e-5
+LEARNING_RATE = 2e-5
 
 
 class Model():
@@ -27,9 +27,10 @@ class Model():
         self.output_vars = tf.placeholder(tf.float32)
         self.sequence_length = tf.placeholder(tf.int32)
         self.output_rewards = tf.placeholder(tf.float32)
-        self.output, self.trainer = model_fn(self.input_images, self.input_vars, self.output_vars, self.output_rewards, self.sequence_length)
+        self.result = tf.placeholder(tf.float32)
+        self.output, self.trainer = model_fn(self.input_images, self.input_vars, self.output_vars, self.output_rewards, self.result, self.sequence_length, name=name)
 
-    def append_feed_dict(self, trainers: list, feed_dict: dict, images, variables, outputs, rewards, length):
+    def append_feed_dict(self, trainers: list, feed_dict: dict, images, variables, outputs, rewards, result, length):
         """
             Fill a feed dict for one iteration of reinforcement learning
         """
@@ -39,6 +40,7 @@ class Model():
         feed_dict[self.sequence_length] = length
         feed_dict[self.output_vars] = outputs
         feed_dict[self.output_rewards] = rewards
+        feed_dict[self.result] = result
 
     def evaluate(self, sess: tf.Session, image, variables, length=1):
         """
@@ -51,11 +53,11 @@ class Model():
         })
 
 
-def cnn(images, variables, outputs=None, rewards=None, sequence_length=1, reuse=False):
+def cnn(images, variables, outputs=None, rewards=None, result=None, sequence_length=1, reuse=False, name="shallow_cnn"):
     """
         Create a simple neural network with a cnn
     """
-    with tf.variable_scope("shallow_cnn", reuse=reuse):
+    with tf.variable_scope(name, reuse=reuse):
         images = tf.reshape(images, (sequence_length, INPUT_HEIGHT, INPUT_WIDTH, INPUT_COLORS))
         variables = tf.reshape(variables, (sequence_length, INPUT_VARIABLES))
 
@@ -81,7 +83,7 @@ def cnn(images, variables, outputs=None, rewards=None, sequence_length=1, reuse=
         #output
         logits = tf.layers.dense(prev_layer, OUTPUTS, name='logits')
         output = tf.nn.softmax(logits, name='output')
-        if outputs is None or rewards is None:
+        if outputs is None or rewards is None or result is None:
             return output
 
         #value
@@ -92,20 +94,24 @@ def cnn(images, variables, outputs=None, rewards=None, sequence_length=1, reuse=
         prediction = tf.layers.dense(prediction, 1, name="prediction")
 
         #training
-        loss_value = tf.losses.mean_squared_error(rewards[:-1], value[:-1])
-        loss_pred = tf.reduce_mean(tf.square(prediction-rewards[-1]))
-        loss_action = tf.losses.softmax_cross_entropy(tf.one_hot(tf.to_int32(outputs), OUTPUTS), logits)
-        loss = loss_value*0.5 + loss_pred*0.5 + loss_action*tf.nn.leaky_relu(rewards, 0.1)*tf.abs(value-rewards)
+        value = tf.reshape(value, tf.shape(rewards))
+        loss_value = tf.losses.mean_squared_error(rewards, value)
+        loss_pred = tf.reduce_mean(tf.square(prediction-result))
+        weight = tf.maximum(0.0, rewards*2-value) + tf.minimum(0.0, rewards*2-value)*0.01
+        loss_action = tf.losses.softmax_cross_entropy(tf.one_hot(tf.to_int32(outputs), OUTPUTS), logits, weight)
+        loss = tf.losses.compute_weighted_loss([loss_value, loss_pred, loss_action], [0.2, 0.2, 1.0])
         adam = tf.train.AdamOptimizer(LEARNING_RATE)
         global_step = tf.train.get_or_create_global_step()
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
             train = adam.minimize(loss, global_step=global_step)
 
         #summaries
+        tf.summary.scalar("Loss", loss)
         tf.summary.scalar("Value_Loss", loss_value)
         tf.summary.scalar("Prediction_Loss", loss_pred)
         tf.summary.scalar("Action_Loss", loss_action)
-        tf.summary.histogram("Action", tf.reduce_mean(output, 1))
+        tf.summary.scalar("Result", result)
+        tf.summary.histogram("Action", tf.reduce_mean(output, 0))
 
         return output, train
 

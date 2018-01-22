@@ -13,7 +13,8 @@ DIR = 'network'
 BIN = '../Build/StrategyGame.exe'
 MAX_LEVEL = 3
 LEVEL_SINGLE_PLAYER = [0, 1]
-BUFFER_SIZE = 18
+BUFFER_SIZE = 15
+REWARD_DECAY = 0.98
 
 class Trainer():
     """
@@ -21,7 +22,7 @@ class Trainer():
         Use 'with' for automatic cleanup
     """
     def __init__(self, network_directory=DIR):
-        self.models = [Model(cnn, 'cnn')]
+        self.models = [Model(cnn, 'cnn_1'), Model(cnn, 'cnn_2')]
         self.saver = tf.train.Saver()
         self.env = UnityEnvironment(file_name=BIN)
         self.global_step = tf.train.get_global_step()
@@ -40,6 +41,7 @@ class Trainer():
         """
             Evaluates the training of a model
         """
+        result = 0.0
         for i in range(4):
             if nn.level in LEVEL_SINGLE_PLAYER:
                 res, mem, _ = play.play(self.sess, nn, None, self.env, play.PLAYERS_AI_1, play.PLAYERS_AI_1, 0, nn.level, True, True)
@@ -48,9 +50,10 @@ class Trainer():
             else:
                 res, mem, _ = play.play(self.sess, nn, None, self.env, play.PLAYERS_RANDOM_1, play.PLAYERS_AI_1, 0, nn.level, True, True)
             self._add_to_replay_buffer(mem, res)
-            if res < 0.1:
-                return False
-        return True
+            if res <= 0.1:
+                return 0.0
+            result += res
+        return result / 4.0
 
     def find_levels(self):
         """
@@ -58,38 +61,45 @@ class Trainer():
         """
         print("Checking for level improvements")
         for nn in self.models:
-            if self.evaluate(nn):
-                nn.randomnesss = max(0.1, nn.randomnesss-0.1)
-                nn.level = min(MAX_LEVEL, nn.level+1)
-                while self.evaluate(nn) and nn.level <= MAX_LEVEL:
-                    nn.randomnesss = 1 / (2 + nn.level) + 0.2
+            while True:
+                result = self.evaluate(nn)
+                if result < 0.1:
+                    nn.randomnesss += 0.1
+                    if nn.randomnesss > 0.7:
+                        nn.level = max(0, nn.level-1)
+                        nn.randomnesss = 4 / (7 + nn.level) + 0.25
+                    break
+                elif result < 0.9:
+                    nn.randomnesss = max(0.15, nn.randomnesss-0.15)
+                    break
+                else:
                     nn.level += 1
-                if nn.randomnesss > 0.1:
-                    nn.level -= 1
-            else:
-                nn.randomnesss += 0.1
-                if nn.randomnesss >= 0.8:
-                    nn.randomnesss = 0.8
-                    nn.level = max(0, nn.level-1)
-            print(nn.name+':', 'level %d, randomness %.2f'%(nn.level, nn.randomnesss))
+                    nn.randomnesss = 4 / (7 + nn.level) + 0.2
+                    if nn.level >= MAX_LEVEL:
+                        break
+            print('\n'+nn.name+':', 'level %d, randomness %.2f, result %.2f\n'%(nn.level, nn.randomnesss, result))
 
     def _fill_replay_buffer(self):
-        while len(self.replay_buffer) < BUFFER_SIZE:
+        not_added = True
+        while not_added:
             for nn in self.models:
                 if nn.level in LEVEL_SINGLE_PLAYER:
                     result, mem_a, _ = play.play(self.sess, nn, None, self.env, play.PLAYERS_AI_1, play.PLAYERS_AI_1, nn.randomnesss, nn.level, True, True)
-                    if result > 0.3:
+                    if result > 0.8:
+                        not_added = False
                         self._add_to_replay_buffer(mem_a, result)
                 else:
                     result, mem_a, mem_b = play.play(self.sess, nn, np.random.choice(self.models), self.env, play.PLAYERS_AI_1, play.PLAYERS_AI_2, nn.randomnesss, nn.level, True, True)
+                    if result != 0:
+                        not_added = False
                     self._add_to_replay_buffer(mem_a, result)
                     self._add_to_replay_buffer(mem_b, -result)
-            print("Filling replay buffer: %d / %d (%d)"%(len(self.replay_buffer), BUFFER_SIZE, np.sum(self.replay_strength)))
+                print("Game Result:", result)
 
     def _add_to_replay_buffer(self, data, result):
         if result == 0:
             return
-        data = _process_data(data)
+        data = _process_data(data, result)
         self.replay_buffer.append(data)
         self.replay_strength.append(max(1, min(5, result*6)))
 
@@ -113,9 +123,9 @@ class Trainer():
         for e in range(epochs):
             for j in range(10):
                 self.find_levels()
-                print("Training")
+                print("Training\n")
                 for i in range(50):
-                    if len(self.replay_buffer) < 5:
+                    if len(self.replay_buffer) < BUFFER_SIZE:
                         self._fill_replay_buffer()
                     index = np.random.randint(len(self.replay_buffer))
                     data = self.replay_buffer[index]
@@ -139,15 +149,16 @@ class Trainer():
             print("Saved epoch", e)
 
 
-def _process_data(history: list):
+def _process_data(history: list, result):
     images = []
     variables = []
     actions = []
     reward = []
     prev = np.zeros_like(history[-1].rewards)
     for m in reversed(history):
-        prev = m.rewards + prev + np.mean(m.rewards)*0.05
+        tmp = m.rewards
         m.rewards = prev
+        prev = tmp + prev*REWARD_DECAY + np.mean(tmp)*0.05
     for i in range(len(history)-1):
         old = history[i]
         new = history[i+1]
@@ -157,7 +168,7 @@ def _process_data(history: list):
                 variables.append(old.states[j])
                 actions.append(new.previous_actions[j])
                 reward.append(new.rewards[j])
-    return (images, variables, actions, reward, len(images))
+    return (images, variables, actions, reward, result, len(images))
 
 
 if __name__ == "__main__":

@@ -17,9 +17,9 @@ def _play_step(sess: tf.Session, model: Model, brain: BrainInfo, randomness):
     if randomness >= 1:
         return np.floor(np.random.uniform(0, 17, (len(brain.agents),)))
     action = np.asarray(model.evaluate(sess, brain.observations[0], brain.states, len(brain.agents)))
-    if randomness > 0:
-        rnd = np.random.uniform(0.0, randomness, action.shape)
-        return np.argmax(action*(1-randomness) + rnd*randomness, 1)
+    if randomness > np.random.uniform(0.0, 1.0):
+        rnd = np.random.uniform(0.0, 1.0, action.shape)
+        return np.argmax(action + rnd, 1)
     return np.argmax(action, 1)
 
 
