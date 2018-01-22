@@ -37,25 +37,105 @@ public class Soldier : Agent {
 	float health;
 	float shootTime;
 	MLAcademy academy;
+	[System.NonSerialized] public MLAcademy.Team team;
 	Soldier target;
 	List<float> state;
 	List<Vector3> path;
 	[System.NonSerialized] public bool goal;
+
+
+#region initialize
 
 	public override void InitializeAgent()
 	{
 		rigidbody = GetComponent<Rigidbody>();
 		health = maxHealth;
 		shootTime = Time.time;
-		state = new List<float>(new float[] { 0, 0, 0 });
+		state = new List<float>(new float[] { 0, 0, 0, 0 });
 		path = new List<Vector3>();
 	}
-	
+
+	public override void AgentReset()
+	{
+		health = maxHealth;
+		healthBar.fillAmount = health / maxHealth;
+		healthBar.color = healthColor.Evaluate(1 - health / maxHealth);
+		shootTime = Time.time;
+		target = null;
+		path.Clear();
+		goal = false;
+		done = false;
+	}
+
+	public void SetTeam(Brain brain, Material color, MLAcademy academy, Camera camera)
+	{
+		GiveBrain(brain);
+		for (int i = 0; i < teamColors.Length; i++)
+		{
+			var mats = teamColors[i].renderer.materials;
+			mats[teamColors[i].index] = color;
+			teamColors[i].renderer.materials = mats;
+		}
+		this.academy = academy;
+		observations = new List<Camera>(new Camera[] { camera });
+		team = academy.RegisterUnit(this);
+		AgentReset();
+	}
+
+	public override void AgentOnDone()
+	{
+		academy.UnregisterUnit(this);
+	}
+
+#endregion
+
+#region moving
+	private void FixedUpdate()
+	{
+		if (done)
+			return;
+		if (path.Count > 0)
+		{
+			Vector3 dir = path[path.Count - 1] - rigidbody.position;
+			float mag = dir.magnitude;
+			if (path.Count != 1 && mag < 0.3)
+			{
+				path.RemoveAt(path.Count - 1);
+				dir = path[path.Count - 1] - rigidbody.position;
+				mag = dir.magnitude;
+			}
+			if (path.Count > 1 || mag > speed * Time.fixedDeltaTime)
+			{
+				Vector3 pos = rigidbody.position + dir * (speed * Time.fixedDeltaTime / mag);
+				Quaternion rotation = Quaternion.RotateTowards(rigidbody.rotation, Quaternion.LookRotation(dir, Vector3.up), angularSpeed);
+				rigidbody.MovePosition(pos);
+				rigidbody.MoveRotation(rotation);
+				return;
+			}
+		}
+		if (target != null)
+		{
+			Shoot();
+		}
+		else if (brain.brainType == BrainType.Player)
+		{
+			FindClosestEnemy();
+		}
+	}
+
 	public void SetDestination(Vector3 pos)
 	{
 		path.Clear();
 		academy.map.GetPath(rigidbody.position, pos, ref path);
 	}
+
+	public void StopMoving()
+	{
+		path.Clear();
+	}
+#endregion
+
+#region shooting
 
 	public void SetTargetDirection(float angle)
 	{
@@ -79,11 +159,6 @@ public class Soldier : Agent {
 				}
 			}
 		}
-	}
-
-	public void StopMoving()
-	{
-		path.Clear();
 	}
 
 	public void SetTarget(Soldier target)
@@ -162,21 +237,15 @@ public class Soldier : Agent {
 		}
 	}
 
-	public void SetTeam(Brain brain, Material color, MLAcademy academy, Camera camera)
+	float VectorToAngle(Vector3 vec)
 	{
-		GiveBrain(brain);
-		for (int i = 0; i < teamColors.Length; i++)
-		{
-			var mats = teamColors[i].renderer.materials;
-			mats[teamColors[i].index] = color;
-			teamColors[i].renderer.materials = mats;
-		}
-		this.academy = academy;
-		observations = new List<Camera>(new Camera[] { camera });
-		academy.RegisterUnit(this);
-		AgentReset();
+		float angle = Vector3.SignedAngle(Vector3.forward, vec, Vector3.up);
+		return angle;
 	}
 
+	#endregion
+
+#region action
 
 	public override List<float> CollectState()
 	{
@@ -184,6 +253,7 @@ public class Soldier : Agent {
 		state[0] = health;
 		state[1] = transform.position.x;
 		state[2] = transform.position.z;
+		state[3] = team.score;
 		return state;
 	}
 
@@ -193,6 +263,8 @@ public class Soldier : Agent {
 			return;
 		if (goal)
 			reward += MLAcademy.REWARD_GOAL;
+		else
+			reward -= MLAcademy.REWARD_CONSTANT_PENALTY;
 
 		int action = Mathf.RoundToInt(act[0]);
 		if (action > 7) //Target Command
@@ -221,60 +293,6 @@ public class Soldier : Agent {
 		}
 	}
 
-	private void FixedUpdate()
-	{
-		if (done)
-			return;
-		if (path.Count > 0)
-		{
-			Vector3 dir = path[path.Count - 1] - rigidbody.position;
-			float mag = dir.magnitude;
-			if (path.Count != 1 && mag < 0.3)
-			{
-				path.RemoveAt(path.Count - 1);
-				dir = path[path.Count - 1] - rigidbody.position;
-				mag = dir.magnitude;
-			}
-			if (path.Count > 1 || mag > speed * Time.fixedDeltaTime)
-			{
-				Vector3 pos = rigidbody.position + dir * (speed * Time.fixedDeltaTime / mag);
-				Quaternion rotation = Quaternion.RotateTowards(rigidbody.rotation, Quaternion.LookRotation(dir, Vector3.up), angularSpeed);
-				rigidbody.MovePosition(pos);
-				rigidbody.MoveRotation(rotation);
-				return;
-			}
-		}
-		if (target != null)
-		{
-			Shoot();
-		}
-		else if (brain.brainType == BrainType.Player)
-		{
-			FindClosestEnemy();
-		}
-	}
+#endregion
 
-	public override void AgentReset()
-	{
-		health = maxHealth;
-		healthBar.fillAmount = health / maxHealth;
-		healthBar.color = healthColor.Evaluate(1 - health / maxHealth);
-		shootTime = Time.time;
-		reward = 0;
-		target = null;
-		path.Clear();
-		goal = false;
-		done = false;
-	}
-
-	public override void AgentOnDone()
-	{
-		academy.UnregisterUnit(this);
-	}
-
-	float VectorToAngle(Vector3 vec)
-	{
-		float angle = Vector3.SignedAngle(Vector3.forward, vec, Vector3.up);
-		return angle;
-	}
 }

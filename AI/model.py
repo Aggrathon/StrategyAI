@@ -6,21 +6,22 @@ from ops import conv2d_stack
 
 INPUT_WIDTH = 280
 INPUT_HEIGHT = 200
-INPUT_VARIABLES = 3
+INPUT_VARIABLES = 4
 INPUT_COLORS = 3
 OUTPUTS = 16
 BRAIN_A = 'ExternalA'
 BRAIN_B = 'ExternalB'
-LEARNING_RATE = 1e-5
+LEARNING_RATE = 5e-5
 
 
 class Model():
     """
         Wrapper for the different model functions
     """
-    def __init__(self, model_fn):
+    def __init__(self, model_fn, name):
+        self.name = name
         self.level = 0
-        self.randomnesss = 1.0
+        self.randomnesss = 0.6
         self.input_images = tf.placeholder(tf.float32)
         self.input_vars = tf.placeholder(tf.float32)
         self.output_vars = tf.placeholder(tf.float32)
@@ -28,17 +29,16 @@ class Model():
         self.output_rewards = tf.placeholder(tf.float32)
         self.output, self.trainer = model_fn(self.input_images, self.input_vars, self.output_vars, self.output_rewards, self.sequence_length)
 
-    def train(self, images, variables, outputs, rewards, length, sess: tf.Session):
+    def append_feed_dict(self, trainers: list, feed_dict: dict, images, variables, outputs, rewards, length):
         """
-            Do one iteration of reinforcement learning
+            Fill a feed dict for one iteration of reinforcement learning
         """
-        sess.run(self.trainer, {
-            self.input_images: images,
-            self.input_vars: variables,
-            self.sequence_length: length,
-            self.output_vars: outputs,
-            self.output_rewards: rewards
-        })
+        trainers.append(self.trainer)
+        feed_dict[self.input_images] = images
+        feed_dict[self.input_vars] = variables
+        feed_dict[self.sequence_length] = length
+        feed_dict[self.output_vars] = outputs
+        feed_dict[self.output_rewards] = rewards
 
     def evaluate(self, sess: tf.Session, image, variables, length=1):
         """
@@ -92,8 +92,8 @@ def cnn(images, variables, outputs=None, rewards=None, sequence_length=1, reuse=
         prediction = tf.layers.dense(prediction, 1, name="prediction")
 
         #training
-        loss_value = tf.losses.mean_squared_error(rewards, value)
-        loss_pred = tf.square(prediction-rewards[-1]) / tf.to_float(sequence_length)
+        loss_value = tf.losses.mean_squared_error(rewards[:-1], value[:-1])
+        loss_pred = tf.reduce_mean(tf.square(prediction-rewards[-1]))
         loss_action = tf.losses.softmax_cross_entropy(tf.one_hot(tf.to_int32(outputs), OUTPUTS), logits)
         loss = loss_value*0.5 + loss_pred*0.5 + loss_action*tf.nn.leaky_relu(rewards, 0.1)*tf.abs(value-rewards)
         adam = tf.train.AdamOptimizer(LEARNING_RATE)
@@ -105,10 +105,11 @@ def cnn(images, variables, outputs=None, rewards=None, sequence_length=1, reuse=
         tf.summary.scalar("Value_Loss", loss_value)
         tf.summary.scalar("Prediction_Loss", loss_pred)
         tf.summary.scalar("Action_Loss", loss_action)
+        tf.summary.histogram("Action", tf.reduce_mean(output, 1))
 
         return output, train
 
 
 if __name__ == "__main__":
     #Check for errors without data
-    Model(cnn)
+    Model(cnn, 'cnn')

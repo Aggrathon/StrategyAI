@@ -32,6 +32,7 @@ public class MapList : ScriptableObject {
 
 		foreach (var map in maps)
 		{
+			mapCache.Add(map);
 			mx = flipX ? new Texture2D(map.width, map.height, map.format, false) : null;
 			my = flipY ? new Texture2D(map.width, map.height, map.format, false) : null;
 			ms = switchTeams ? new Texture2D(map.width, map.height, map.format, false) : null;
